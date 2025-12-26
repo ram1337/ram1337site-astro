@@ -8,6 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   integrations: [mdx()],
 
+  site: "https://ram1337.ru",
   vite: {
     plugins: [tailwindcss()],
   },

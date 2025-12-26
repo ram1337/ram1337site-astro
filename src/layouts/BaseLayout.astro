@@ -1,7 +1,22 @@
 ---
 import "../styles/global.css";
 
-const { title = "ram1337", description = "Личный блог Рамиля" } = Astro.props;
+type Props = {
+  title: string;
+  description?: string;
+  image?: string;
+};
+
+const {
+  title,
+  description = "ram1337 персональный сайт",
+  image = "/og/default.jpg",
+} = Astro.props as Props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = image.startsWith("http")
+  ? image
+  : new URL(image, Astro.site).toString();
 ---
 
 <html lang="ru" class="h-full">
@@ -10,6 +25,23 @@ const { title = "ram1337", description = "Личный блог Рамиля" } 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {/* Open Graph */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ram1337" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.toString()} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <script is:inline>
       (function () {
