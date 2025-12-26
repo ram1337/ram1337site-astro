@@ -1,0 +1,182 @@
+---
+title: "Использование Proxifier на максималках"
+date: 2025-12-27
+tags: ["macos", "windows", "proxifier", "shadowsocks"]
+description: "Как удобно настроить Proxifier для повседных задач"
+draft: false
+---
+
+## Зачем вообще Proxifier
+
+**Proxifier** — это системный прокси-роутер, который позволяет:
+- направлять трафик **конкретных приложений** через прокси;
+- комбинировать несколько прокси (Shadowsocks, SOCKS5, HTTP);
+- управлять маршрутизацией **без VPN-туннеля**.
+
+В отличие от VPN:
+- не весь трафик идёт через прокси;
+- локальная сеть, Docker, VPNы и dev-инфра не ломаются;
+- можно очень точно настроить, *что* и *куда* идёт.
+
+---
+
+## Что потребуется
+
+Перед началом убедись, что у тебя есть:
+
+- установленный и [активированный](https://github.com/alphadl/proxifier_code) **Proxifier**
+- рабочий прокси:
+  - Shadowsocks
+  - SOCKS5 / HTTP
+- понимание, *какие приложения и сайты* ты хочешь проксировать
+
+> ⚠️ Proxifier не создаёт прокси.
+> Он только маршрутизирует трафик через них.
+
+---
+
+## Базовая логика работы
+
+Proxifier работает по простому принципу:
+
+1. Приложение открывает соединение
+2. Proxifier перехватывает запрос
+3. Сравнивает его с правилами Proxifier
+4. Направляет:
+   - через прокси  
+   - или напрямую
+
+---
+## Добавляем прокси через Shadowsocks-NG (на примере macOS)
+
+1. Установи приложение Shadowsocks-NG: https://github.com/shadowsocks/ShadowsocksX-NG/releases/tag/v1.10.3
+2. Добавь свой прокси сервер
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step1-add-proxy.jpeg"
+  alt="Настройка прокси в Shadowsocks-NG"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+3. В настройках (Preferences → Advanced) установи свойства локального SOCKS5 сервера
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step2-set-local-server-options.png"
+  alt="Настройка локального прокси в Shadowsocks-NG"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+
+3. Включи Shadowsocks и установи мод `Manual`
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step3-set-manual-and-enable.png"
+  alt="Настройка прокси в Shadowsocks-NG"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+---
+
+## Добавляем прокси (Shadowsocks / SOCKS5)
+
+### Пример: SOCKS5 (Shadowsocks)
+
+1. Открой **Proxifier → Settings → Proxies**
+2. Нажми **Add**
+3. Укажи настройки, которые мы указывали выше (для локального сервера прокси)
+   - Type: **SOCKS5**
+   - Address: `127.0.0.1`
+   - Port: `1086`
+4. Сохрани
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step4-add-proxy-to-proxifier.png"
+  alt="Настройка прокси в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+5. Открой **Proxifier → Settings → DNS**
+6. Установи галку напротив `Resolve hostnames through proxy` - это нужно для того чтобы DNS запросы шли через прокси - меньше шансов спалить реальный IP
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step5-set-dns-settings.png"
+  alt="Настройка прокси в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+---
+
+## Главное: правила (Rules)
+
+### Принцип
+
+- правила читаются **сверху вниз**
+- первое совпавшее правило — применяется
+- в конце всегда должен быть **Direct**
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step6-set-rules.png"
+  alt="Настройка правил в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+#### Пример - настройка правил для YouTube 
+
+1. Добавляем правило, называем `YouTube`, устанавливаем галку на `Enabled`
+2. Поле `Applications` ставим `Any`
+3. В Target Hosts указываем следующие домены:
+
+```
+*.youtube.com
+*.googlevideo.com
+*.ytimg.com
+*.youtubei.googleapis.com
+*.youtu.be
+r*.googlevideo.com
+redirector*.googlevideo.com
+i.ytimg.com
+ytimg.com
+suggestqueries.google.com
+youtubeanalytics.googleapis.com
+pagead2.googlesyndication.com
+googleads.g.doubleclick.net
+stats.g.doubleclick.net
+s.ytimg.com
+static.doubleclick.net
+```
+
+4. Target Ports - оставляем пустым
+5. Action - устанавливаем наш добавленный ранее прокси сервер 
+6. Сохраняем и радуемся, что ютуб работает, а остальные сайты открываются с Вашего IP. При этом Вы можете использовать даже корпоративный VPN - правила Proxifier будут использоваться Выше вашего Direct соединения.
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step7-set-youtube-rules.png"
+  alt="Настройка правил YouTube в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+> Если нужно - выдам основные домены для всех нужных вам сервисов. Пишите в личку
+
+---
+
+### Как все не сломать
+
+Обязательно смотрите, чтобы все ресурсы (Default, Localhost) были в самом низу с правилом `Direct`. Это позволяет не прокидывать через прокси остальные соединения, не указанные Выше по правилам. 
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step8-direct-connections.png"
+  alt="Настройка Direct правил в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+--- 
+
+### Проверка работы
+
+В главном окне Proxifier приложение выводит все соединения, пробрасываемые по добавленным правилам. Смотрите чтобы при открытии ресурса (не важно через какое приложение, если вы их не указывали) трафик пробрасывался через ваш SOCKS5 прокси.
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/macos-proxifier-ss/step9-check-connection.png"
+  alt="Мониторинг правил в Proxifier"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>

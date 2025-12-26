@@ -1,0 +1,82 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="404 — not found">
+  <section
+    class="flex min-h-[55vh] flex-col gap-6
+         pt-12 md:pt-20 font-mono text-sm"
+  >
+    <div
+      class="relative rounded-xl border border-slate-200 bg-slate-50/80 p-4
+         dark:border-slate-800 dark:bg-slate-950/80
+         md:translate-y-[-1rem]"
+    >
+      <p class="text-slate-500 dark:text-slate-400">
+        ram1337@site:~$ cd {Astro.url.pathname}
+      </p>
+
+      <p class="mt-1 text-red-600 dark:text-red-400">
+        bash: cd: {Astro.url.pathname}: No such file or directory
+      </p>
+
+      <p class="mt-4 text-slate-500 dark:text-slate-400">ram1337@site:~$ ls</p>
+
+      <p class="mt-1 text-slate-700 dark:text-slate-300">
+        posts&nbsp;&nbsp;tag&nbsp;&nbsp;about
+      </p>
+
+      <p class="mt-4 text-slate-500 dark:text-slate-400">
+        ram1337@site:~$ <span class="cursor">_</span>
+      </p>
+    </div>
+
+    <div class="mt-6 md:mt-8 flex flex-wrap gap-3">
+      <a
+        href="/"
+        class="group inline-flex items-center gap-2 rounded-lg border border-slate-200
+           bg-slate-50/70 px-3 py-2 font-mono text-xs text-slate-700
+           shadow-sm transition
+           hover:border-slate-300 hover:bg-slate-50
+           dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200
+           dark:hover:border-slate-700 dark:hover:bg-slate-950"
+      >
+        <span class="text-slate-500 dark:text-slate-400">→</span>
+        <span
+          class="group-hover:text-violet-600 dark:group-hover:text-violet-300"
+        >
+          cd /home/ram1337
+        </span>
+      </a>
+
+      <a
+        href="/posts/"
+        class="group inline-flex items-center gap-2 rounded-lg border border-slate-200
+           bg-slate-50/70 px-3 py-2 font-mono text-xs text-slate-700
+           shadow-sm transition
+           hover:border-slate-300 hover:bg-slate-50
+           dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200
+           dark:hover:border-slate-700 dark:hover:bg-slate-950"
+      >
+        <span class="text-slate-500 dark:text-slate-400">→</span>
+        <span
+          class="group-hover:text-violet-600 dark:group-hover:text-violet-300"
+        >
+          ls posts
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <style>
+    .cursor {
+      display: inline-block;
+      animation: blink 1s steps(2, start) infinite;
+    }
+    @keyframes blink {
+      to {
+        visibility: hidden;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,157 @@
+---
+title: "Подключение Shadowsocks для Android, iOS, Windows, macOS"
+date: 2025-12-26
+tags: ["shadowsocks", "android", "ios", "windows", "macos"]
+description: "Подключаемся к корпоративным VPN Shadowsocks"
+draft: false
+---
+
+## Общая информация
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/shadowsocks-connect-tutorial/ss-logo.png"
+  alt="Shadowsocks Logo"
+  class="mx-auto max-h-[150px] rounded-lg shadow-md"
+/>
+
+Этот гайд описывает подключение к **Shadowsocks**.
+
+**Shadowsocks** — это не VPN, а **прокси-протокол**, предназначенный для:
+- маскировки трафика;
+- работы в сетях с жёсткой фильтрацией.
+
+> Рекомендуется только для продвинутых пользователей, в остальных случаях по возможности используйте другие клиенты.
+
+---
+
+## Что понадобится
+
+Для подключения к Shadowsocks тебе понадобятся:
+
+- **адрес сервера**
+- **порт**
+- **пароль**
+- **метод шифрования**, в нашем случае - `aes-256-gcm`
+- **plugin / plugin options**, в нашем случае - `obfs-local` с опциями: `obfs=tls;obfs-host=cloudflare.com`
+
+Чаще всего всё это передаётся одной строкой `ss://` или QR-кодом
+
+---
+
+## Быстрый переход
+
+<nav class="not-prose my-6 flex flex-wrap gap-3 text-sm">
+  <a href="#android" class="rounded-full border px-3 py-1 hover:text-violet-500">
+    Android
+  </a>
+  <a href="#ios" class="rounded-full border px-3 py-1 hover:text-violet-500">
+    iOS
+  </a>
+  <a href="#windows" class="rounded-full border px-3 py-1 hover:text-violet-500">
+    Windows
+  </a>
+  <a href="#macos" class="rounded-full border px-3 py-1 hover:text-violet-500">
+    macOS
+  </a>
+</nav>
+
+---
+
+## Android
+
+### Вариант 1. Shadowsocks (официальный клиент)
+
+1. Установи **Shadowsocks** из Google Play: https://play.google.com/store/apps/details?id=com.github.shadowsocks
+2. Открой приложение
+3. Добавь сервер:
+   - через QR-код  
+   - или вручную
+4. Заполни параметры:
+   - Server
+   - Port
+   - Password
+   - Encryption method
+5. Включи прокси
+
+---
+
+## iOS
+
+На iOS официального клиента нет, используются сторонние приложения.
+
+Приложение **Potatso**: https://itunes.apple.com/app/apple-store/id1070901416?pt=2305194&ct=shadowsocks.org&mt=8
+    доступно только через иностранные аккаунты AppStore (не РФ).
+
+Пример (Potatso):
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/shadowsocks-connect-tutorial/ios.jpeg"
+  alt="Настройка Potatso на iOS"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+1. Установи приложение
+2. Открой приложение
+3. Добавь сервер:
+   - через QR-код  
+   - или вручную
+4. Заполни параметры:
+   - Server
+   - Port
+   - Password
+   - Encryption method
+5. Включи прокси
+
+---
+
+## Windows
+
+### Вариант 1. shadowsocks-win: for Windows
+
+1. Скачай **Shadowsocks-Windows**: https://github.com/shadowsocks/shadowsocks-windows/releases
+
+ИЛИ Скачай **Shadowsocks-Qt5**: https://github.com/shadowsocks/shadowsocks-qt5/releases 
+
+2. Запусти приложение
+3. Добавь сервер или импортируй `ss://`
+4. Выбери режим:
+   - **Global**
+5. Включи прокси
+
+---
+
+## macOS
+
+### ShadowsocksX-NG
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/shadowsocks-connect-tutorial/macos.jpeg"
+  alt="Настройка Shadowsocks на macOS"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+1. Установи **ShadowsocksX-NG**: https://github.com/shadowsocks/ShadowsocksX-NG/releases
+2. Добавь сервер:
+   - вручную  
+   - или через `ss://`
+3. Включи прокси
+
+---
+
+## Режимы работы (важно)
+
+Большинство клиентов поддерживают несколько режимов:
+
+- **Global** — весь трафик устройства проходит через прокси  
+- **PAC / Rule-based** — только выбранные сайты  
+- **Manual** — прокси на уровне браузера
+
+Для повседневного использования обычно хватает **PAC / Rules**.
+
+Удобно для использования совместно с Proxifier.
+
+---
+
+## Проверка подключения
+
+После подключения IP-адрес должен измениться. Минимальная проверка - посмотри свой IP и геолокацию на сайте [2IP](https://2ip.ru)

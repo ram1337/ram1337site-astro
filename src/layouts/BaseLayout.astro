@@ -1,0 +1,146 @@
+---
+import "../styles/global.css";
+
+const { title = "ram1337", description = "Личный блог Рамиля" } = Astro.props;
+---
+
+<html lang="ru" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <script is:inline>
+      (function () {
+        try {
+          const stored = localStorage.getItem("theme");
+          const systemPrefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const theme = stored || (systemPrefersDark ? "dark" : "light");
+          const root = document.documentElement;
+
+          if (theme === "dark") {
+            root.classList.add("dark");
+          } else {
+            root.classList.remove("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body
+    class="min-h-screen flex flex-col bg-slate-50 text-slate-900
+           dark:bg-slate-950 dark:text-slate-100"
+  >
+    <header
+      class="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/90 backdrop-blur
+             dark:border-slate-800 dark:bg-slate-950/80"
+    >
+      <div
+        class="mx-auto flex max-w-3xl items-center justify-between px-4 py-3"
+      >
+        <a
+          href="/"
+          class="rounded-full border border-slate-300/60 px-3 py-1
+       text-xs font-mono text-slate-600
+       dark:border-slate-700 dark:text-slate-300"
+        >
+          /home/ram1337/
+        </a>
+
+        <nav
+          class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300"
+        >
+          <a
+            href="/posts/"
+            class="transition-colors hover:text-violet-500 dark:hover:text-violet-300"
+          >
+            Посты
+          </a>
+          <a
+            href="/tag/"
+            class="transition-colors hover:text-violet-500 dark:hover:text-violet-300"
+          >
+            Теги
+          </a>
+          <a
+            href="/about/"
+            class="transition-colors hover:text-violet-500 dark:hover:text-violet-300"
+          >
+            Контакты
+          </a>
+
+          <button
+            id="theme-toggle"
+            type="button"
+            class="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full
+                   border border-slate-200 bg-white text-slate-700 text-sm
+                   shadow-sm transition hover:border-violet-400 hover:text-violet-600
+                   dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200
+                   dark:hover:border-violet-400 dark:hover:text-violet-200"
+            aria-label="Переключить тему"
+          >
+            <span id="theme-icon-sun" class="hidden">☀️</span>
+            <span id="theme-icon-moon" class="hidden">🌙</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="flex-1">
+      <div class="mx-auto max-w-3xl px-4 py-10">
+        <slot />
+      </div>
+    </main>
+
+    <footer
+      class="border-t border-slate-200 bg-slate-50/90 text-slate-500
+             dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-500"
+    >
+      <div class="mx-auto max-w-3xl px-4 py-4 text-center text-xs">
+        © {new Date().getFullYear()} /home/ram1337. Сделано на Astro.
+      </div>
+    </footer>
+
+    <script is:inline>
+      (function () {
+        const root = document.documentElement;
+        const btn = document.getElementById("theme-toggle");
+        const sun = document.getElementById("theme-icon-sun");
+        const moon = document.getElementById("theme-icon-moon");
+
+        if (!btn || !sun || !moon) return;
+
+        function getCurrentTheme() {
+          if (root.classList.contains("dark")) return "dark";
+          return "light";
+        }
+
+        function applyIcon(theme) {
+          if (theme === "dark") {
+            sun.classList.remove("hidden");
+            moon.classList.add("hidden");
+          } else {
+            sun.classList.add("hidden");
+            moon.classList.remove("hidden");
+          }
+        }
+
+        applyIcon(getCurrentTheme());
+
+        btn.addEventListener("click", () => {
+          const isDark = root.classList.toggle("dark");
+          const theme = isDark ? "dark" : "light";
+
+          try {
+            localStorage.setItem("theme", theme);
+          } catch (e) {}
+
+          applyIcon(theme);
+        });
+      })();
+    </script>
+  </body>
+</html>

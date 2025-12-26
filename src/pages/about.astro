@@ -1,0 +1,135 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Обо мне - ram1337">
+  <section class="space-y-8">
+    <header class="space-y-3">
+      <p
+        class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400"
+      >
+        /about
+      </p>
+      <h1
+        class="text-3xl font-bold tracking-tight
+               text-slate-900 dark:text-slate-50"
+      >
+        Привет!
+      </h1>
+      <p class="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+        <span
+          class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1
+               text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        >
+          Fullstack developer
+          <span class="text-slate-400 dark:text-slate-500">•</span>
+          PHP · Python · Go · JS/TS
+        </span>
+      </p>
+    </header>
+
+    <div class="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+      <div
+        class="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+      >
+        <p>
+          Вместо того, чтобы держать всё в голове и в заметках, я хочу
+          складывать сюда решения, разборы багов, инструкции и другие вещи, к
+          которым захочется вернуться через время.
+        </p>
+      </div>
+
+      <aside
+        class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm
+               shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200"
+      >
+        <h2
+          class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+        >
+          Контакты
+        </h2>
+
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">✉️</span>
+            <div>
+              <p
+                class="text-[0.7rem] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
+                Email
+              </p>
+
+              <button
+                id="reveal-email"
+                type="button"
+                class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500
+             dark:text-violet-300 dark:hover:text-violet-200"
+              >
+                показать
+              </button>
+
+              <span id="email-slot" class="hidden font-mono text-sm"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-lg">💬</span>
+          <div>
+            <p
+              class="text-[0.7rem] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Telegram
+            </p>
+            <a
+              href="https://t.me/ram1337"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500
+                       dark:text-violet-300 dark:hover:text-violet-200"
+            >
+              @ram1337
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⚙️</span>
+          <div>
+            <p
+              class="text-[0.7rem] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              GitHub
+            </p>
+            <a
+              href="https://github.com/ram1337"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500
+                       dark:text-violet-300 dark:hover:text-violet-200"
+            >
+              github.com/ram1337
+            </a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <script is:inline>
+    const btn = document.getElementById("reveal-email");
+    const slot = document.getElementById("email-slot");
+
+    if (btn && slot) {
+      btn.addEventListener("click", () => {
+        const u = ["r", ".", "shagiev"].join("");
+        const d = ["ram1337", ".", "ru"].join("");
+        const email = `${u}@${d}`;
+
+        slot.innerHTML = `<a href="mailto:${email}">${email}</a>`;
+        slot.classList.remove("hidden");
+        btn.remove();
+      });
+    }
+  </script>
+</BaseLayout>

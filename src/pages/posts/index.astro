@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<"posts">;
+
+const posts = (await getCollection("posts"))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime()) as Post[];
+---
+
+<BaseLayout
+  title="Все заметки /home/ram1337/"
+  description="Все записи блога Рамиля в хронологическом порядке."
+>
+  <section class="space-y-4">
+    <header class="space-y-2">
+      <p
+        class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400"
+      >
+        /posts
+      </p>
+      <h1
+        class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+      >
+        Все записи
+      </h1>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Хронологический список заметок, статей и прочей ереси, которую я решил
+        не держать только в голове.
+      </p>
+    </header>
+
+    {
+      posts.length === 0 ? (
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Записей пока нет. Но это явно временная неприятность.
+        </p>
+      ) : (
+        <div class="mt-4 space-y-3">
+          {posts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

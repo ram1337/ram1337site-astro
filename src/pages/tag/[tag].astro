@@ -1,0 +1,82 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<"posts">;
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("posts")) as Post[];
+  const map = new Map<string, Post[]>();
+
+  for (const post of posts) {
+    for (const tag of post.data.tags ?? []) {
+      if (!tag) continue;
+      const key = tag.trim();
+      if (!key) continue;
+      const arr = map.get(key) ?? [];
+      arr.push(post);
+      map.set(key, arr);
+    }
+  }
+
+  return Array.from(map.entries()).map(([tag, posts]) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: posts.sort(
+        (a, b) => b.data.date.getTime() - a.data.date.getTime()
+      ),
+    },
+  }));
+}
+
+interface Props {
+  tag: string;
+  posts: Post[];
+}
+
+const { tag, posts } = Astro.props as Props;
+---
+
+<BaseLayout
+  title={`Записи с тегом #${tag} — ram1337`}
+  description={`Посты с тегом ${tag}.`}
+>
+  <section class="space-y-4">
+    <header class="space-y-2">
+      <h1
+        class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+      >
+        Тег: <span class="text-violet-600 dark:text-violet-300">#{tag}</span>
+      </h1>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Все записи, которые помечены этим тегом
+      </p>
+    </header>
+
+    {
+      posts.length === 0 ? (
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Под этим тегом пока ничего нет. Странно, но бывает
+        </p>
+      ) : (
+        <div class="mt-4 space-y-3">
+          {posts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      )
+    }
+
+    <div class="pt-4">
+      <a
+        href="/tag/"
+        class="text-xs text-slate-600 underline-offset-4 hover:underline
+               dark:text-slate-400"
+      >
+        ← ко всем тегам
+      </a>
+    </div>
+  </section>
+</BaseLayout>

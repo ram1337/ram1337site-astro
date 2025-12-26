@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* dark-mode по классу .dark на <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+}

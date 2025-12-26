@@ -1,0 +1,84 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import type { CollectionEntry } from "astro:content";
+
+type Post = CollectionEntry<"posts">;
+type Frontmatter = Post["data"];
+
+interface Props {
+  frontmatter: Frontmatter;
+}
+
+const { frontmatter } = Astro.props as Props;
+const { title, date, description, tags = [] } = frontmatter;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="space-y-6">
+    <header class="space-y-3">
+      <h1
+        class="text-3xl font-bold tracking-tight
+               text-slate-900 dark:text-slate-50"
+      >
+        {title}
+      </h1>
+
+      <p
+        class="flex flex-wrap items-center gap-2 text-sm
+               text-slate-600 dark:text-slate-400"
+      >
+        <time datetime={date.toISOString()}>
+          {
+            date.toLocaleDateString("ru-RU", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          }
+        </time>
+
+        {
+          tags.length > 0 && (
+            <>
+              <span class="text-slate-400 dark:text-slate-500">•</span>
+              <span class="flex flex-wrap gap-1">
+                {tags.map((tag: string) => (
+                  <a
+                    href={`/tag/${encodeURIComponent(tag)}/`}
+                    class="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs
+                         text-slate-700 transition hover:border-violet-400 hover:text-violet-700
+                         dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300
+                         dark:hover:border-violet-400 dark:hover:text-violet-200"
+                  >
+                    #{tag}
+                  </a>
+                ))}
+              </span>
+            </>
+          )
+        }
+      </p>
+
+      {
+        description && (
+          <p class="text-sm text-slate-700 dark:text-slate-300">
+            {description}
+          </p>
+        )
+      }
+    </header>
+
+    <section
+      class="prose prose-slate max-w-none dark:prose-invert
+             prose-headings:scroll-mt-24
+             prose-a:text-violet-600 dark:prose-a:text-violet-300 prose-a:no-underline
+             hover:prose-a:text-violet-700 dark:hover:prose-a:text-violet-200
+             prose-strong:text-slate-900 dark:prose-strong:text-slate-50
+             prose-code:text-violet-700 dark:prose-code:text-violet-200
+             prose-pre:bg-slate-950/90 prose-pre:border prose-pre:border-slate-800
+             prose-blockquote:border-l-violet-500/60"
+    >
+      <slot />
+    </section>
+  </article>
+</BaseLayout>
