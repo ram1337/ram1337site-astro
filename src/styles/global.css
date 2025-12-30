@@ -17,3 +17,25 @@
     @apply text-inherit no-underline;
   }
 }
+
+pre {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background: #020617;
+  border: 1px solid #1f2937;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  color: #e5e7eb;
+  border-color: #a78bfa;
+}

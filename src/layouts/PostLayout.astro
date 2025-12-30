@@ -69,14 +69,16 @@ const { title, date, description, tags = [] } = frontmatter;
     </header>
 
     <section
-      class="prose prose-slate max-w-none dark:prose-invert
+      class="prose prose-slate dark:prose-invert max-w-none
              prose-headings:scroll-mt-24
              prose-a:text-violet-600 dark:prose-a:text-violet-300 prose-a:no-underline
              hover:prose-a:text-violet-700 dark:hover:prose-a:text-violet-200
              prose-strong:text-slate-900 dark:prose-strong:text-slate-50
              prose-code:text-violet-700 dark:prose-code:text-violet-200
-             prose-pre:bg-slate-950/90 prose-pre:border prose-pre:border-slate-800
-             prose-blockquote:border-l-violet-500/60"
+             prose-pre:bg-slate-950
+             prose-pre:border
+             prose-pre:border-slate-800
+             prose-pre:rounded-xl"
     >
       <slot />
     </section>

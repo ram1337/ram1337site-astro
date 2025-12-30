@@ -1,0 +1,252 @@
+---
+title: "Корпоративный IKEv2 VPN сервер с Lets Encrypt"
+date: 2025-12-30
+tags: ["strongswan", "linux", "ikev2"]
+description: "Настройка для КОРПОРАТИВНОГО VPN на примере Ubuntu 22.04"
+draft: false
+---
+
+Этот туториал показывает, как поднять корпоративный IKEv2 VPN-сервер на Ubuntu 22.04 с TLS-сертификатом от Let’s Encrypt, работающий на стандартных портах.
+
+Решение подходит для:
+- мобильных устройств (iOS / Android),
+- Windows и macOS,
+- постоянного VPN без клиентских костылей,
+- production-использования.
+
+Используется strongSwan с EAP аутентификацией и публичным сертификатом.
+
+## Что мы в итоге получим
+- IKEv2 VPN на стандартных портах 500/4500 UDP
+- TLS-сертификат от Let’s Encrypt (без самоподписанных CA)
+- Совместимость с нативными клиентами ОС
+- Автообновление сертификатов
+- Прозрачный доступ в интернет для клиентов
+
+
+## Установка зависимостей
+
+Обновляем систему и ставим всё необходимое
+
+```bash
+sudo apt update
+sudo apt install \
+  strongswan strongswan-pki \
+  libstrongswan-standard-plugins \
+  libstrongswan-extra-plugins \
+  certbot ufw cron -y
+  ```
+
+Пояснение по содержимому:
+- strongswan — сам VPN
+- strongswan-pki — работа с сертификатами
+- certbot — получение сертификата Let’s Encrypt
+- ufw — firewall
+- cron — автообновление
+
+
+### Получение TLS-сертификата (Let’s Encrypt)
+
+Сертификат будет использоваться напрямую strongSwan, без nginx/apache
+
+```bash
+sudo certbot certonly \
+  --rsa-key-size 4096 \
+  --standalone \
+  --agree-tos \
+  --no-eff-email \
+  --email ${EMAIL} \
+  -d ${DOMAIN}
+```
+
+После успешного получения сертификата:
+
+```bash
+sudo su
+cd /etc/letsencrypt/live/${DOMAIN}
+
+cp fullchain.pem /etc/ipsec.d/certs/
+cp privkey.pem   /etc/ipsec.d/private/
+cp chain.pem     /etc/ipsec.d/cacerts/
+```
+
+> privkey.pem должен лежать именно в /etc/ipsec.d/private/, иначе strongSwan его не увидит
+
+## Настройка strongSwan
+
+### Подготовка
+
+Сохраняем оригинальный конфиг на всякий случай и создаем новый.
+
+```bash
+mv /etc/ipsec.conf /etc/ipsec.conf.orig
+nano /etc/ipsec.conf
+```
+
+### Основная конфигурация /etc/ipsec.conf
+
+Обратите внимание на подсеть, которая будет выдаваться пользователям во внутренней сети сервера. В данном примере это IP-адреса из пула 10.15.6.0/24.
+Вы можете поменять его на свой.
+
+```ini
+#chron logger
+config setup
+    charondebug="ike 2, dmn 2, knl 1, cfg 2"
+    uniqueids=yes
+
+#define new ipsec connection
+conn ikev2
+    auto=add
+    compress=no
+    type=tunnel
+    keyexchange=ikev2
+    ike=aes128-sha1-modp1024,aes128-sha1-modp1536,aes128-sha1-modp2048,aes128-sha256-ecp256,aes128-sha256-modp1024,aes128-sha256-modp1536,aes128-sha256-modp2048,aes256-aes128-sha256-sha1-modp2048-modp4096-modp1024,aes256-sha1-modp1024,aes256-sha256-modp1024,aes256-sha256-modp1536,aes256-sha256-modp2048,aes256-sha256-modp4096,aes256-sha384-ecp384,aes256-sha384-modp1024,aes256-sha384-modp1536,aes256-sha384-modp2048,aes256-sha384-modp4096,aes256gcm16-aes256gcm12-aes128gcm16-aes128gcm12-sha256-sha1-modp2048-modp4096-modp1024,3des-sha1-modp1024!
+    esp=aes128-aes256-sha1-sha256-modp2048-modp4096-modp1024,aes128-sha1,aes128-sha1-modp1024,aes128-sha1-modp1536,aes128-sha1-modp2048,aes128-sha256,aes128-sha256-ecp256,aes128-sha256-modp1024,aes128-sha256-modp1536,aes128-sha256-modp2048,aes128gcm12-aes128gcm16-aes256gcm12-aes256gcm16-modp2048-modp4096-modp1024,aes128gcm16,aes128gcm16-ecp256,aes256-sha1,aes256-sha256,aes256-sha256-modp1024,aes256-sha256-modp1536,aes256-sha256-modp2048,aes256-sha256-modp4096,aes256-sha384,aes256-sha384-ecp384,aes256-sha384-modp1024,aes256-sha384-modp1536,aes256-sha384-modp2048,aes256-sha384-modp4096,aes256gcm16,aes256gcm16-ecp384,3des-sha1!
+    fragmentation=yes
+    forceencaps=yes
+    dpdaction=clear
+    dpddelay=300s
+    rekey=no
+    left=%any
+    leftid=@${DOMAIN}
+    leftcert=fullchain.pem
+    leftsendcert=always
+    leftsubnet=0.0.0.0/0
+    right=%any
+    rightid=%any
+    rightauth=eap-mschapv2
+    rightsourceip=10.15.6.0/24
+    rightdns=1.1.1.1,8.8.8.8
+    rightsendcert=never
+    eap_identity=%identity
+```
+
+Это базовые параметры логирования и управления сессиями.
+- IKEv2 — основной протокол
+- `compress=no` — компрессию лучше не использовать
+- `ike`, `esp` - длинный список для максимальной совместимости с клиентами, strongSwan сам выберет лучший алгоритм
+- `fragmentation` и `forceencaps` — must-have для мобильных сетей
+- `rekey=no` упрощает жизнь клиентам
+- `leftid` **обязан совпадать с CN сертификата**
+- `right`, `rightid`, `rightauth`, `rightsourceip`, `rightdns`, `rightsendcert`, `eap_identity` - аутентификация по логин/паролю, клиенты получают IP из заданного пула. DNS можно указать свои
+
+### Пользователи
+
+Пароли пользователей можно вписывать в файле `/etc/ipsec.serets` в формате `login : EAP "password"`
+
+Как итог - файл будет иметь следующий вид:
+
+```ini
+# This file holds shared secrets or RSA private keys for authentication.
+
+# RSA private key for this host, authenticating it to any other host
+# which knows the public part.
+: RSA "privkey.pem"
+user1 : EAP "password1"
+user2 : EAP "password2"
+```
+
+## Запуск и автозапуск 
+
+Включаем автозапуск strongswan.
+```bash
+sudo systemctl start strongswan-starter
+sudo systemctl enable strongswan-starter
+```
+
+## Firewall (ufw)
+
+Настраиваем firewall на стандартные порты IKEv2
+
+```bash
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw allow 500,4500/udp
+sudo ufw enable
+```
+
+### Forwarding 
+
+В файле /etc/default/ufw поменяйте значение переменной на ACCEPT: `DEFAULT_FORWARD_POLICY="ACCEPT"`
+
+### NAT и MSS
+
+Открайте файл `/etc/ufw/before.rules`. Далее в тексте поменяйте 10.15.6.0/24 на свою подсеть, которую Вы указали в файле `ipsec.conf`, а `ens3` - на свой интерфейс (проверить командой `ip a`)
+
+Добавьте в самый вверх
+
+```ini
+*nat
+-A POSTROUTING -s 10.15.6.0/24 -o ens3 -m policy --pol ipsec --dir out -j ACCEPT
+-A POSTROUTING -s 10.15.6.0/24 -o ens3 -j MASQUERADE
+COMMIT
+
+*mangle
+-A FORWARD --match policy --pol ipsec --dir in -s 10.15.6.0/24 -o ens3 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+COMMIT
+```
+- ens3 - замени на свой интерфейс
+- MSS-fix - критичен для мобильных клиентов
+
+### Правила forward
+
+Под секцией *filter добавьте следующие правила
+
+```ini
+-A ufw-before-forward --match policy --pol ipsec --dir in --proto esp -s 10.15.6.0/24 -j ACCEPT
+-A ufw-before-forward --match policy --pol ipsec --dir out --proto esp -d 10.15.6.0/24 -j ACCEPT
+```
+
+В файле `/etc/ufw/sysctl.conf` снимите комментарий со строки `net/ipv4/ip_forward=1`
+
+Перезагрузите ipsec 
+
+```bash
+ipsec reload
+ipsec restart
+```
+
+## Автообновление сертификатов
+
+### Cron (не лучший, но рабочий вариант)
+
+В crontab (`crontab -e`) внесите следующее расписание:
+
+```bash
+0 2 * * 2  root /usr/bin/letsencrypt renew >> /var/log/letsencrypt-renewal.log && ipsec reload && ipsec restart
+```
+
+### Рекомендованный вариант — renewal hook
+
+Для автообновления сделайте хук после автообновления сертификата
+
+```bash
+cd /etc/letsencrypt/renewal-hooks/deploy/
+nano ipsec-renew.sh
+```
+
+```bash
+#!/bin/bash
+set -e
+
+VPN_DOMAIN="vpn.company.ru"
+LE_DIR="/etc/letsencrypt/live/${VPN_DOMAIN}"
+IPSEC_CERT_DIR="/etc/ipsec.d"
+
+cp "${LE_DIR}/fullchain.pem" "${IPSEC_CERT_DIR}/certs/"
+cp "${LE_DIR}/privkey.pem"   "${IPSEC_CERT_DIR}/private/"
+cp "${LE_DIR}/chain.pem"     "${IPSEC_CERT_DIR}/cacerts/"
+
+echo "$(date): Certificates copied, reloading ipsec..." >> /var/log/ipsec-renew.log
+ipsec reload
+ipsec restart
+```
+
+Сделайте файл запускабельным.
+
+```bash
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/ipsec-renew.sh
+```
+
+Готово! Сервер настроен. Инструкция по подключению доступна в статье [Подключение IKEv2 для Android, iOS, Windows, macOS](/posts/ikev2-connect-tutorial/)
