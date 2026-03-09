@@ -86,7 +86,7 @@ const ogImage = image.startsWith("http")
         document,
         "script",
         "https://mc.yandex.ru/metrika/tag.js?id=94692701",
-        "ym"
+        "ym",
       );
 
       ym(94692701, "init", {
@@ -223,7 +223,7 @@ const ogImage = image.startsWith("http")
       document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll("pre").forEach((pre) => {
           const btn = document.createElement("button");
-          btn.textContent = "copy";
+          btn.textContent = "копировать";
           btn.className = "copy-btn";
 
           btn.addEventListener("click", async () => {
@@ -231,8 +231,8 @@ const ogImage = image.startsWith("http")
             if (!code) return;
 
             await navigator.clipboard.writeText(code);
-            btn.textContent = "copied";
-            setTimeout(() => (btn.textContent = "copy"), 1500);
+            btn.textContent = "готово";
+            setTimeout(() => (btn.textContent = "копировать"), 1500);
           });
 
           pre.appendChild(btn);
