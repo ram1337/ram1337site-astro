@@ -92,6 +92,8 @@ const ogImage = image.startsWith("http")
       ym(94692701, "init", {
         ssr: true,
         clickmap: true,
+        referrer: document.referrer,
+        url: location.href,
         accurateTrackBounce: true,
         trackLinks: true,
       });

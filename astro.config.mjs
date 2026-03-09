@@ -10,7 +10,7 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
   integrations: [mdx(), sitemap()],
 
-  site: "https://ram1337.ru",
+  site: "https://ram1337.dev",
   vite: {
     plugins: [tailwindcss()],
   },
