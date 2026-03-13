@@ -1,1 +1,1 @@
-Личный сайт на Astro framework: https://ram1337.ru
+Личный сайт на Astro framework: https://ram1337.dev
