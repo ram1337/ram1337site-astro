@@ -1,0 +1,104 @@
+---
+title: "Раздельная маршрутизация VPN на Keenetic"
+date: 2026-03-24
+tags:
+  [
+    "keenetic",
+    "netcraze",
+    "vpn",
+    "маршрутизация",
+    "router",
+    "интернет",
+    "блокировки",
+  ]
+description: "Как настроить раздельную маршрутизацию VPN на Keenetic - открываем YouTube, Instagram, ChatGPT и другие сервисы через домашний Wi-Fi без постоянного ручного включения VPN"
+draft: false
+---
+
+Тяжела, надо сказать, нынче жизнь простого человека в российском интернете. Чтобы добраться до благ цивилизации, порой приходится не просто нажать одну кнопку, а изрядно поковыряться в роутере, маршрутах и прочих сетевых премудростях. Думскроллинг, конечно, занятие сомнительное и полезным его не назовёшь, однако ж кто из нас без греха. А коли уж бездельничать, то хотя бы с комфортом
+
+Так вот, в какой-то момент мне попросту надоело каждый раз вручную включать всякие специальные средства для общения с суверенной цифровой действительностью. Захотелось чтобы всё работало само - домашний Wi-Fi открывал нужные сервисы без лишней возни, а остальной трафик жил своей обычной жизнью
+
+Счастливые обладатели роутеров Keenetic, кои ныне зовутся Netcraze, обладают полезной силой. Они могут настроить раздельную маршрутизацию для всей Wi-Fi-сети. То есть одни сервисы будут автоматически идти через VPN, а все прочие - через обычное подключение. Собственно говоря, сей текст и написан затем, чтобы разложить этот процесс по полочкам
+
+Сразу оговорюсь: в теории так умеют многие модели Keenetic, но более-менее спокойную и стабильную работу я бы ожидал прежде всего от старших устройств вроде Ultra или Hero 5G. Далее я пишу с расчётом на то, что сам роутер у вас уже настроен и интернет на нём жив
+
+> Не используйте VPN для обхода блокировок. На данный момент использование VPN для обхода блокировок не запрещено, однако на будущее оставляю эту ремарку. Времена нынче переменчивые, а законотворческая фантазия безгранична
+
+1. Входим в админ-панель Keenetic
+
+Для начала сядьте за устройство с которого будете осуществлять настройку, подключите его к Wi-Fi. Зайдите в интерфейс веб-морды панели администратора. Он чаще всего доступен по адресу http://my.keenetic.net, либо http://192.168.1.1, либо по вашему личному домену, если вы его настраивали
+
+Заходим в Настройки системы (http://192.168.1.1/system/components). Жмакаем "Изменить набор компонентов" и в строке поиска пишем VPN и устанавливаем клиент того VPN, который Вы хотите подключить
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/keenetic-split-tunelling/keenetic-components.png"
+  alt="keenetic components"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+Выбор у Keenetic весьма приличный. В этом и состоит один из его главных плюсов - не нужно устраивать пляски с бубном чтобы подключить современный VPN-протокол. Нашли нужный компонент, поставили галочку, перезагрузили роутер и можно двигаться дальше
+
+2. Подключение VPN
+
+Дальше инструкция немного расходится в зависимости от того, какой именно VPN вы используете. Однако суть везде одна - подключайте VPN вашего протокола (благо инструкций на Keenetic навалом) и не забудьте поставить галочку "Использовать для выхода в Интернет" и активировать подключение (включить его тумблером, если не включился сам)
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/keenetic-split-tunelling/keenetic-vpn-nat.png"
+  alt="keenetic nat vpn"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+3. Список сервисов
+
+Теперь нужно определить, какие именно сервисы вы хотите автоматически отправлять через VPN. Не весь интернет подряд, а только нужные сайты и приложения. Ниже - список популярных сервисов. Он не исчерпывающий, но если нужного вам варианта здесь нет, извольте заглянуть в основной репозиторий со списками маршрутов: https://github.com/RockBlack-VPN/ip-address/tree/main/Global
+
+Вот и сам списочек:
+
+1. YouTube: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Youtube
+2. WhatsApp: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Whatsapp
+3. ChatGPT: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/ChatGPT(OpenAI)
+4. Discord: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Discord
+5. Facebook: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Facebook
+6. Instagram: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Instagram
+7. Rutracker: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Rutracker
+8. Spotify: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Spotify
+9. Telegram: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Telegram
+10. TikTok: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/TikTok
+11. Twitter (X): https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Twitter
+12. Grok: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/grok
+13. Lostfilm: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/lostfilm.tv
+14. NNMClub: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/nnmclub.to
+15. Microsoft Xbox: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/xbox
+16. Sony Playstation Network: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/SonyPlaystationNetwork
+17. Google: https://github.com/RockBlack-VPN/ip-address/tree/main/Global/Google
+
+> Facebook, WhatsApp, Instagram принадлежит Meta - экстремистской и запрещенной организации в РФ по решению суда
+
+4. Загрузка маршрутов
+
+После того как вы открыли страницу интересующего Вас сервиса выше - качайте последний из загруженных .bat файлов. Внутри него будет содержимое из набора строк вида `route add ... mask ... 0.0.0.0`. Пугаться тут нечего, ибо руками это править не придётся, файл нужен именно для импорта маршрутов в роутер. Как определить самый последний? Смотрите в самый правый столбец, саму дату загрузки я выделил ниже на скриншоте. Если понимаете какой файл нужен именно вам - можете выбрать сами
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/keenetic-split-tunelling/github-last-bat.png"
+  alt="github last bat img"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+В админ-панели роутера переходим в раздел "Маршрутизация" -> IPv4 маршруты: http://192.168.1.1/staticRoutes/ipv4. Намедни в Keenetic добавили ещё и маршруты по DNS, но в сей записке их пока трогать не будем
+
+<img
+  src="https://264718ab-35ddccc5-94ae-46b1-bdb7-0ac6415ba472.s3.twcstorage.ru/ram1337-site/keenetic-split-tunelling/keenetic-load-routes.png"
+  alt="keenetic load routes"
+  class="mx-auto max-h-[500px] rounded-lg shadow-md"
+/>
+
+Повторите это со всеми файлами, которые вы скачали из списка в п.3.
+
+После этого, собственно, всё и должно заработать. В идеальном мире - сразу. В менее идеальном - через несколько минут. Проверьте, открываются ли нужные сервисы с устройств, подключённых к вашему домашнему Wi-Fi
+
+В результате получится вполне удобная схема - YouTube, Instagram и прочие выбранные сервисы будут автоматически идти через VPN, а всё остальное - через ваше обычное интернет-подключение. Без постоянного ручного включения, без лишней возни и без необходимости объяснять каждому домашнему устройству, как ему жить эту нелёгкую цифровую жизнь
+
+Если захотите копнуть глубже или полечить неполадки, смотрите основной репозиторий: https://github.com/RockBlack-VPN/ip-address/tree/main
+
+Ну а если совсем уж всё пошло вкривь и вкось - пишите мне, [контакты есть здесь](/about/).
