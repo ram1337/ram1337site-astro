@@ -1,5 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 ---
 
 <BaseLayout title="Обо мне - ram1337">
@@ -10,16 +12,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       >
         /about
       </p>
+
       <h1
-        class="text-3xl font-bold tracking-tight
-               text-slate-900 dark:text-slate-50"
+        class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
       >
         Привет!
       </h1>
-      <p class="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+
+      <p class="max-w-xl text-sm text-slate-600 dark:text-slate-400">
         <span
-          class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1
-               text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+          class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
         >
           Fullstack developer
           <span class="text-slate-400 dark:text-slate-500">•</span>
@@ -37,21 +39,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           суровым видом, щурится на логи, выявляет угрозы и одним только
           взглядом заставляет уязвимости каяться в содеянном. Однако ж жизнь
           распоряжается занятнее - по сути я давно уже универсальный
-          разнорабочий человек в IT
+          разнорабочий.
         </p>
+
         <p>
           Сей сайт я затеял не ради важного вида и не для того, чтобы изображать
-          из себя цифрового мудреца с кафедры. Все куда проще - поймал себя на
-          простой мысли, что держать все в голове, в заметках, в обрывках чатов
-          и в случайных файлах с названиями вроде final_version_really_final_3
-          затея сомнительная
+          из себя цифрового мудреца с кафедры. Всё куда проще - поймал себя на
+          простой мысли, что держать всё в голове, в заметках, в обрывках чатов
+          и в случайных файлах с названиями вроде
+          <code>final_version_really_final_3</code> затея сомнительная
         </p>
+
         <p>
           Собственно говоря, потому и хочется складывать сюда свои думы,
           решения, разборы, инструкции и прочие технические бумажки, к которым
-          спустя время можно вернуться и ониб не выглядели шаманским заговором
-          против здравого смысла
+          спустя время можно вернуться, и они не выглядели бы шаманским
+          заговором против здравого смысла
         </p>
+
         <p>
           Пишу я прежде всего для себя, однако если эти заметки сгодятся ещё
           кому-нибудь - что ж, тем лучше
@@ -59,8 +64,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
 
       <aside
-        class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm
-               shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200"
+        class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200"
       >
         <h2
           class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
@@ -68,67 +72,434 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           Контакты
         </h2>
 
-        <div class="space-y-2">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">✉️</span>
-            <div>
+        <div
+          class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/40"
+        >
+          <div class="flex items-start gap-3">
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-lg dark:border-violet-900/70 dark:bg-violet-950/40"
+            >
+              ✉️
+            </div>
+
+            <div class="min-w-0 flex-1 space-y-1">
               <p
-                class="text-[0.7rem] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                class="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
               >
                 Email
               </p>
-
-              <button
-                id="reveal-email"
-                type="button"
-                class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500
-             dark:text-violet-300 dark:hover:text-violet-200"
+              <p
+                class="text-sm leading-relaxed text-slate-600 dark:text-slate-300"
               >
-                показать
-              </button>
-
-              <span id="email-slot" class="hidden font-mono text-sm"></span>
+                Для обращений, предложений и прочих дел мирских
+              </p>
             </div>
           </div>
-        </div>
 
-        <div class="flex items-center gap-2">
-          <span class="text-lg">⚙️</span>
-          <div>
-            <p
-              class="text-[0.7rem] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          <div class="mt-4">
+            <button
+              id="open-email-modal"
+              type="button"
+              class="inline-flex items-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-violet-500 active:scale-[0.98] dark:bg-violet-500 dark:hover:bg-violet-400"
             >
-              GitHub
-            </p>
-            <a
-              href="https://github.com/ram1337"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500
-                       dark:text-violet-300 dark:hover:text-violet-200"
+              Показать адрес
+            </button>
+          </div>
+
+          <div
+            class="mt-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-3 dark:border-slate-800 dark:bg-slate-900/70"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-lg dark:border-slate-700 dark:bg-slate-950"
             >
-              github.com/ram1337
-            </a>
+              ⚙️
+            </div>
+
+            <div class="min-w-0">
+              <p
+                class="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+              >
+                GitHub
+              </p>
+              <a
+                href="https://github.com/ram1337"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-sm text-violet-700 underline underline-offset-4 hover:text-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
+              >
+                github.com/ram1337
+              </a>
+            </div>
           </div>
         </div>
       </aside>
     </div>
   </section>
 
-  <script is:inline>
-    const btn = document.getElementById("reveal-email");
-    const slot = document.getElementById("email-slot");
+  <div
+    id="email-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+    aria-hidden="true"
+  >
+    <div
+      id="email-modal-backdrop"
+      class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+    >
+    </div>
 
-    if (btn && slot) {
-      btn.addEventListener("click", () => {
-        const u = ["adm", "in"].join("");
-        const d = ["r", "am", "1", "337", ".", "dev"].join("");
-        const email = `${u}@${d}`;
+    <div
+      class="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="email-modal-title"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p
+            id="email-modal-kicker"
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          >
+            Защита от ботов
+          </p>
+          <h2
+            id="email-modal-title"
+            class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50"
+          >
+            Подтвердите, что вы не бот
+          </h2>
+        </div>
 
-        slot.innerHTML = `<a href="mailto:${email}">${email}</a>`;
-        slot.classList.remove("hidden");
-        btn.remove();
+        <button
+          id="close-email-modal"
+          type="button"
+          class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100"
+          aria-label="Закрыть"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div
+        id="email-error"
+        class="mt-3 hidden w-full rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+      >
+      </div>
+
+      <div
+        id="email-result"
+        class="mt-3 hidden w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200"
+      >
+        <div class="space-y-2">
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300"
+          >
+            Email
+          </p>
+
+          <div class="flex items-center gap-2">
+            <a
+              id="email-link"
+              href="#"
+              class="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[1rem] no-underline hover:no-underline"
+            ></a>
+
+            <button
+              id="copy-email-btn"
+              type="button"
+              class="shrink-0 rounded-md border border-emerald-300 bg-white/70 p-2 text-emerald-800 transition duration-150 hover:bg-white hover:shadow-sm active:scale-95 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100 dark:hover:bg-emerald-900/70"
+              aria-label="Скопировать email"
+              title="Скопировать email"
+            >
+              <svg
+                id="copy-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="h-4 w-4"
+                aria-hidden="true"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path
+                  d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form id="email-form" class="mt-4 space-y-4">
+        <div
+          class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900"
+        >
+          <div
+            id="captcha-container"
+            class="smart-captcha min-w-[304px]"
+            style="height: 100px"
+            data-sitekey="ysc1_poboxazG6wDgY1m6GdMbGjVdqHqM3GkHdv6QNAYSf6ca3df3"
+          >
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3">
+          <button
+            id="cancel-email-modal"
+            type="button"
+            class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+          >
+            Закрыть
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ apiBaseUrl }}>
+    const modal = document.getElementById("email-modal");
+    const openBtn = document.getElementById("open-email-modal");
+    const closeBtn = document.getElementById("close-email-modal");
+    const cancelBtn = document.getElementById("cancel-email-modal");
+    const backdrop = document.getElementById("email-modal-backdrop");
+
+    const form = document.getElementById("email-form");
+    const captchaContainer = document.getElementById("captcha-container");
+
+    const modalTitle = document.getElementById("email-modal-title");
+    const modalKicker = document.getElementById("email-modal-kicker");
+
+    const emailResult = document.getElementById("email-result");
+    const emailLink = document.getElementById("email-link");
+    const copyEmailBtn = document.getElementById("copy-email-btn");
+    const copyIcon = document.getElementById("copy-icon");
+    const errorBox = document.getElementById("email-error");
+
+    let revealedEmail = "";
+    let captchaWatcher = null;
+
+    async function ensureCsrfCookie() {
+      const response = await fetch(`${apiBaseUrl}/sanctum/csrf-cookie`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
       });
+
+      if (!response.ok) {
+        throw new Error("Не удалось получить CSRF-cookie.");
+      }
     }
+
+    function getXsrfTokenFromCookie() {
+      const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    function setDefaultModalState() {
+      if (modalTitle) {
+        modalTitle.textContent = revealedEmail
+          ? "Email уже открыт"
+          : "Подтвердите, что вы не бот";
+      }
+
+      if (modalKicker) {
+        modalKicker.textContent = revealedEmail ? "Готово" : "Защита от ботов";
+      }
+    }
+
+    function openModal() {
+      modal?.classList.remove("hidden");
+      modal?.classList.add("flex");
+      document.body.classList.add("overflow-hidden");
+      clearError();
+      setDefaultModalState();
+
+      if (revealedEmail) {
+        setEmail(revealedEmail);
+        return;
+      }
+
+      startCaptchaWatcher();
+    }
+
+    function closeModal() {
+      modal?.classList.add("hidden");
+      modal?.classList.remove("flex");
+      document.body.classList.remove("overflow-hidden");
+      clearError();
+      stopCaptchaWatcher();
+    }
+
+    function setError(message) {
+      if (!errorBox) return;
+      errorBox.textContent = message;
+      errorBox.classList.remove("hidden");
+    }
+
+    function clearError() {
+      if (!errorBox) return;
+      errorBox.textContent = "";
+      errorBox.classList.add("hidden");
+    }
+
+    function setEmail(email) {
+      if (!emailResult || !emailLink) return;
+
+      revealedEmail = email;
+      emailLink.textContent = email;
+      emailLink.setAttribute("href", `mailto:${email}`);
+      emailResult.classList.remove("hidden");
+
+      if (modalTitle) {
+        modalTitle.textContent = "Вот он, адрес для связи";
+      }
+
+      if (modalKicker) {
+        modalKicker.textContent = "Email открыт";
+      }
+    }
+
+    function getSmartToken() {
+      const tokenInput = captchaContainer?.querySelector(
+        'input[name="smart-token"]',
+      );
+      return tokenInput?.value?.trim() || "";
+    }
+
+    function startCaptchaWatcher() {
+      stopCaptchaWatcher();
+
+      captchaWatcher = window.setInterval(() => {
+        if (revealedEmail) {
+          stopCaptchaWatcher();
+          return;
+        }
+
+        const captchaToken = getSmartToken();
+
+        if (!captchaToken) {
+          return;
+        }
+
+        stopCaptchaWatcher();
+        form?.requestSubmit();
+      }, 500);
+    }
+
+    function stopCaptchaWatcher() {
+      if (captchaWatcher) {
+        window.clearInterval(captchaWatcher);
+        captchaWatcher = null;
+      }
+    }
+
+    function setCopySuccessState() {
+      copyEmailBtn?.classList.add("bg-emerald-100", "dark:bg-emerald-900/80");
+      copyEmailBtn?.setAttribute("title", "Скопировано");
+      copyEmailBtn?.setAttribute("aria-label", "Скопировано");
+
+      if (copyIcon) {
+        copyIcon.innerHTML = `<path d="M20 6 9 17l-5-5"></path>`;
+      }
+    }
+
+    function resetCopyState() {
+      copyEmailBtn?.classList.remove(
+        "bg-emerald-100",
+        "dark:bg-emerald-900/80",
+      );
+      copyEmailBtn?.setAttribute("title", "Скопировать email");
+      copyEmailBtn?.setAttribute("aria-label", "Скопировать email");
+
+      if (copyIcon) {
+        copyIcon.innerHTML = `
+        <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      `;
+      }
+    }
+
+    openBtn?.addEventListener("click", openModal);
+    closeBtn?.addEventListener("click", closeModal);
+    cancelBtn?.addEventListener("click", closeModal);
+    backdrop?.addEventListener("click", closeModal);
+
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Escape" &&
+        modal &&
+        !modal.classList.contains("hidden")
+      ) {
+        closeModal();
+      }
+    });
+
+    copyEmailBtn?.addEventListener("click", async () => {
+      const email = emailLink?.textContent?.trim();
+      if (!email) return;
+
+      try {
+        await navigator.clipboard.writeText(email);
+        setCopySuccessState();
+      } catch {
+        copyEmailBtn?.setAttribute("title", "Ошибка копирования");
+        copyEmailBtn?.setAttribute("aria-label", "Ошибка копирования");
+      }
+
+      setTimeout(() => {
+        resetCopyState();
+      }, 1400);
+    });
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (revealedEmail) {
+        setEmail(revealedEmail);
+        return;
+      }
+
+      const captchaToken = getSmartToken();
+
+      if (!captchaToken) {
+        setError("Сначала пройдите капчу");
+        return;
+      }
+
+      try {
+        await ensureCsrfCookie();
+        const xsrfToken = getXsrfTokenFromCookie();
+
+        const response = await fetch(`${apiBaseUrl}/api/captcha/verify`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
+          },
+          body: JSON.stringify({
+            smart_token: captchaToken,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.email) {
+          throw new Error(data.message || "Не удалось получить email");
+        }
+
+        setEmail(data.email);
+      } catch (error) {
+        setError(error?.message || "Произошла неизвестная ошибка");
+        startCaptchaWatcher();
+      }
+    });
+
+    setDefaultModalState();
+    resetCopyState();
   </script>
 </BaseLayout>

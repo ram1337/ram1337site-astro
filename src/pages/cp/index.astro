@@ -1,0 +1,607 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
+---
+
+<BaseLayout title="Панель управления - ram1337">
+  <section class="space-y-8">
+    <header class="space-y-3">
+      <p
+        class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400"
+      >
+        /cp
+      </p>
+
+      <h1
+        class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+      >
+        Панель управления
+      </h1>
+
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Хозяйство, настройки и прочие дела державные
+      </p>
+    </header>
+
+    <div
+      id="cp-loading"
+      class="rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-300"
+    >
+      Подождите, идёт проверка сессии...
+    </div>
+
+    <div
+      id="cp-error"
+      class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+    >
+    </div>
+
+    <div id="cp-content" class="hidden space-y-6">
+      <section
+        class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+      >
+        <div
+          class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+        >
+          <div class="space-y-2">
+            <p
+              class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+            >
+              Аккаунт
+            </p>
+
+            <h2
+              id="cp-user-name"
+              class="text-2xl font-semibold text-slate-900 dark:text-slate-50"
+            >
+              -
+            </h2>
+
+            <p
+              id="cp-user-meta"
+              class="text-sm text-slate-600 dark:text-slate-400"
+            >
+              -
+            </p>
+          </div>
+
+          <button
+            id="logout-btn"
+            type="button"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+          >
+            Выйти
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+      >
+        <div class="mb-5 space-y-2">
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          >
+            Безопасность
+          </p>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            Сменить пароль
+          </h3>
+        </div>
+
+        <div
+          class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          Этот пароль используется только для входа в панель управления.
+        </div>
+
+        <form id="password-form" class="space-y-5" novalidate>
+          <div class="space-y-2">
+            <label
+              for="current_password"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >
+              Текущий пароль
+            </label>
+            <input
+              id="current_password"
+              name="current_password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="block h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+              placeholder="Введите текущий пароль"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label
+              for="new_password"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >
+              Новый пароль
+            </label>
+            <input
+              id="new_password"
+              name="new_password"
+              type="password"
+              autocomplete="new-password"
+              required
+              class="block h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+              placeholder="Введите новый пароль"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label
+              for="new_password_confirmation"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >
+              Подтверждение нового пароля
+            </label>
+            <input
+              id="new_password_confirmation"
+              name="new_password_confirmation"
+              type="password"
+              autocomplete="new-password"
+              required
+              class="block h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+              placeholder="Повторите новый пароль"
+            />
+          </div>
+
+          <div
+            id="password-success"
+            class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200"
+          >
+          </div>
+
+          <div
+            id="password-error"
+            class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+          >
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              id="password-submit-btn"
+              type="submit"
+              class="inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-500 dark:hover:bg-violet-400"
+            >
+              <span id="password-submit-text">Сменить пароль</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section
+        class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+      >
+        <div class="mb-5 space-y-2">
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          >
+            Серверы
+          </p>
+        </div>
+
+        <div
+          id="servers-loading"
+          class="hidden rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+        >
+          Загружаем список серверов...
+        </div>
+
+        <div
+          id="servers-error"
+          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+        >
+        </div>
+
+        <div
+          id="servers-empty"
+          class="hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/40"
+        >
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Пока серверов не видать.
+          </p>
+        </div>
+
+        <div id="servers-list" class="hidden grid gap-4 md:grid-cols-2"></div>
+      </section>
+
+      <script is:inline define:vars={{ apiBaseUrl }}>
+        const loadingBox = document.getElementById("cp-loading");
+        const errorBox = document.getElementById("cp-error");
+        const contentBox = document.getElementById("cp-content");
+        const userName = document.getElementById("cp-user-name");
+        const userMeta = document.getElementById("cp-user-meta");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        const passwordForm = document.getElementById("password-form");
+        const currentPasswordInput =
+          document.getElementById("current_password");
+        const newPasswordInput = document.getElementById("new_password");
+        const newPasswordConfirmationInput = document.getElementById(
+          "new_password_confirmation",
+        );
+        const passwordSubmitBtn = document.getElementById(
+          "password-submit-btn",
+        );
+        const passwordSubmitText = document.getElementById(
+          "password-submit-text",
+        );
+        const passwordErrorBox = document.getElementById("password-error");
+        const passwordSuccessBox = document.getElementById("password-success");
+
+        const serversLoadingBox = document.getElementById("servers-loading");
+        const serversErrorBox = document.getElementById("servers-error");
+        const serversEmptyBox = document.getElementById("servers-empty");
+        const serversListBox = document.getElementById("servers-list");
+
+        function setServersLoading(isLoading) {
+          if (!serversLoadingBox) return;
+
+          if (isLoading) {
+            serversLoadingBox.classList.remove("hidden");
+          } else {
+            serversLoadingBox.classList.add("hidden");
+          }
+        }
+
+        function showServersError(message) {
+          if (!serversErrorBox) return;
+          serversErrorBox.textContent = message;
+          serversErrorBox.classList.remove("hidden");
+        }
+
+        function hideServersError() {
+          if (!serversErrorBox) return;
+          serversErrorBox.textContent = "";
+          serversErrorBox.classList.add("hidden");
+        }
+
+        function showServersEmpty() {
+          serversEmptyBox?.classList.remove("hidden");
+          serversListBox?.classList.add("hidden");
+        }
+
+        function hideServersEmpty() {
+          serversEmptyBox?.classList.add("hidden");
+        }
+
+        function renderServers(servers) {
+          if (!serversListBox) return;
+
+          if (!Array.isArray(servers) || servers.length === 0) {
+            showServersEmpty();
+            return;
+          }
+
+          hideServersEmpty();
+          serversListBox.classList.remove("hidden");
+
+          serversListBox.innerHTML = servers
+            .map((server) => {
+              const activeBadge = server.is_active
+                ? `<span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300">Активен</span>`
+                : `<span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">Недоступен</span>`;
+
+              return `
+        <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">${server.emoji_flag ?? "🌐"}</span>
+                <h4 class="truncate text-base font-semibold text-slate-900 dark:text-slate-50">
+                  ${server.name ?? "Безымянный сервер"}
+                </h4>
+              </div>
+
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                ${server.city ?? "-"}, ${server.country ?? "-"}
+              </p>
+            </div>
+
+            ${activeBadge}
+          </div>
+
+          <dl class="mt-4 space-y-2 text-sm">
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500 dark:text-slate-400">Тип</dt>
+              <dd class="font-medium text-slate-800 dark:text-slate-200">${server.type ?? "-"}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500 dark:text-slate-400">Адрес</dt>
+              <dd class="font-mono text-slate-800 dark:text-slate-200">${server.address ?? "-"}</dd>
+            </div>
+          </dl>
+
+          <div class="mt-4">
+            <button
+              type="button"
+              disabled
+              class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-500 opacity-60 dark:border-slate-700 dark:text-slate-400"
+            >
+              Запросить конфиг
+            </button>
+          </div>
+        </article>
+      `;
+            })
+            .join("");
+        }
+
+        async function fetchServers() {
+          const response = await fetch(`${apiBaseUrl}/api/servers/list`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (response.status === 401) {
+            window.location.href = "/login";
+            return null;
+          }
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(
+              data.message || "Не удалось получить список серверов.",
+            );
+          }
+
+          return Array.isArray(data.data) ? data.data : [];
+        }
+
+        function showError(message) {
+          if (!errorBox) return;
+          errorBox.textContent = message;
+          errorBox.classList.remove("hidden");
+        }
+
+        function hideError() {
+          if (!errorBox) return;
+          errorBox.textContent = "";
+          errorBox.classList.add("hidden");
+        }
+
+        function setLoading(isLoading) {
+          if (!loadingBox) return;
+          if (isLoading) {
+            loadingBox.classList.remove("hidden");
+          } else {
+            loadingBox.classList.add("hidden");
+          }
+        }
+
+        function showContent() {
+          contentBox?.classList.remove("hidden");
+        }
+
+        function fillUser(user) {
+          if (!user) return;
+
+          if (userName) {
+            userName.textContent = user.name || user.login || "Безымянный";
+          }
+
+          if (userMeta) {
+            const parts = [];
+
+            if (user.login) {
+              parts.push(`login: ${user.login}`);
+            }
+
+            if (user.email) {
+              parts.push(user.email);
+            }
+
+            userMeta.textContent = parts.length
+              ? parts.join(" • ")
+              : "Авторизован";
+          }
+        }
+
+        function showPasswordError(message) {
+          if (!passwordErrorBox) return;
+          passwordErrorBox.textContent = message;
+          passwordErrorBox.classList.remove("hidden");
+        }
+
+        function hidePasswordError() {
+          if (!passwordErrorBox) return;
+          passwordErrorBox.textContent = "";
+          passwordErrorBox.classList.add("hidden");
+        }
+
+        function showPasswordSuccess(message) {
+          if (!passwordSuccessBox) return;
+          passwordSuccessBox.textContent = message;
+          passwordSuccessBox.classList.remove("hidden");
+        }
+
+        function hidePasswordSuccess() {
+          if (!passwordSuccessBox) return;
+          passwordSuccessBox.textContent = "";
+          passwordSuccessBox.classList.add("hidden");
+        }
+
+        function setPasswordLoading(isLoading) {
+          if (!passwordSubmitBtn || !passwordSubmitText) return;
+
+          passwordSubmitBtn.toggleAttribute("disabled", isLoading);
+          passwordSubmitText.textContent = isLoading
+            ? "Сохраняем..."
+            : "Сменить пароль";
+        }
+
+        async function ensureCsrfCookie() {
+          const response = await fetch(`${apiBaseUrl}/sanctum/csrf-cookie`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Не удалось получить CSRF-cookie");
+          }
+        }
+
+        function getXsrfTokenFromCookie() {
+          const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+          return match ? decodeURIComponent(match[1]) : "";
+        }
+
+        async function fetchCurrentUser() {
+          const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (response.status === 401) {
+            window.location.href = "/login";
+            return null;
+          }
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok || !data.user) {
+            throw new Error(
+              data.message || "Не удалось получить данные пользователя",
+            );
+          }
+
+          return data.user;
+        }
+
+        async function logout() {
+          if (!logoutBtn) return;
+
+          logoutBtn.setAttribute("disabled", "disabled");
+
+          try {
+            await ensureCsrfCookie();
+
+            const xsrfToken = getXsrfTokenFromCookie();
+
+            const response = await fetch(`${apiBaseUrl}/api/auth/logout`, {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
+              },
+              body: JSON.stringify({}),
+            });
+
+            if (!response.ok) {
+              throw new Error("Не удалось выйти из системы");
+            }
+
+            window.location.href = "/login";
+          } catch (error) {
+            showError(error?.message || "Произошла ошибка при выходе");
+            logoutBtn.removeAttribute("disabled");
+          }
+        }
+
+        passwordForm?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          hidePasswordError();
+          hidePasswordSuccess();
+
+          const currentPassword = currentPasswordInput?.value || "";
+          const newPassword = newPasswordInput?.value || "";
+          const newPasswordConfirmation =
+            newPasswordConfirmationInput?.value || "";
+
+          if (!currentPassword || !newPassword || !newPasswordConfirmation) {
+            showPasswordError("Заполните все поля.");
+            return;
+          }
+
+          if (newPassword !== newPasswordConfirmation) {
+            showPasswordError("Новый пароль и подтверждение не совпадают.");
+            return;
+          }
+
+          setPasswordLoading(true);
+
+          try {
+            await ensureCsrfCookie();
+
+            const xsrfToken = getXsrfTokenFromCookie();
+
+            const response = await fetch(`${apiBaseUrl}/api/auth/password`, {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
+              },
+              body: JSON.stringify({
+                current_password: currentPassword,
+                password: newPassword,
+                password_confirmation: newPasswordConfirmation,
+              }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+              throw new Error(data.message || "Не удалось сменить пароль.");
+            }
+
+            passwordForm.reset();
+            showPasswordSuccess("Пароль успешно изменён.");
+          } catch (error) {
+            showPasswordError(error?.message || "Произошла ошибка.");
+          } finally {
+            setPasswordLoading(false);
+          }
+        });
+
+        logoutBtn?.addEventListener("click", logout);
+
+        (async () => {
+          hideError();
+          hideServersError();
+          setLoading(true);
+          setServersLoading(true);
+
+          try {
+            const user = await fetchCurrentUser();
+
+            if (!user) return;
+
+            fillUser(user);
+            showContent();
+
+            const servers = await fetchServers();
+
+            if (servers) {
+              renderServers(servers);
+            }
+          } catch (error) {
+            showError(error?.message || "Произошла ошибка");
+          } finally {
+            setLoading(false);
+            setServersLoading(false);
+          }
+        })();
+      </script>
+    </div>
+  </section></BaseLayout
+>

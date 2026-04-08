@@ -1,0 +1,270 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
+---
+
+<BaseLayout title="Вход - ram1337">
+  <div
+    id="login-loader"
+    class="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
+  >
+    <div class="flex flex-col items-center gap-4 py-6 text-center">
+      <div
+        class="h-10 w-10 animate-spin rounded-full border-2 border-slate-300 border-t-violet-500 dark:border-slate-700 dark:border-t-violet-400"
+      >
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-sm font-medium text-slate-800 dark:text-slate-100">
+          Идёт проверка сессии
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Подождите немного...
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <section id="login-content" class="mx-auto hidden w-full max-w-md py-6">
+    <div class="mb-8 text-center">
+      <p
+        class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400"
+      >
+        /login
+      </p>
+      <h1
+        class="mt-3 text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50"
+      >
+        Вход
+      </h1>
+    </div>
+
+    <div
+      class="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
+    >
+      <form id="login-form" class="space-y-5" novalidate>
+        <div class="space-y-2">
+          <label
+            for="login"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            Логин
+          </label>
+
+          <input
+            id="login"
+            name="login"
+            type="text"
+            autocomplete="username"
+            required
+            placeholder="Введите логин"
+            class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between gap-3">
+            <label
+              for="password"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >
+              Пароль
+            </label>
+
+            <button
+              id="toggle-password"
+              type="button"
+              class="text-sm font-medium text-slate-500 transition hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300"
+            >
+              Показать
+            </button>
+          </div>
+
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="Введите пароль"
+            class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+          />
+          <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            Если Вы забыли пароль, <a href="/about/"
+              >обратитесь к администратору</a
+            >
+          </p>
+        </div>
+
+        <div
+          id="login-error"
+          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+        >
+        </div>
+
+        <button
+          id="login-submit"
+          type="submit"
+          class="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-violet-600 px-4 text-lg font-semibold text-white shadow-sm transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-500 dark:hover:bg-violet-400"
+        >
+          <span id="login-submit-text">Войти</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <script is:inline define:vars={{ apiBaseUrl }}>
+    const MIN_LOADER_TIME = 450;
+
+    const loginContent = document.getElementById("login-content");
+    const loginLoader = document.getElementById("login-loader");
+
+    const form = document.getElementById("login-form");
+    const loginInput = document.getElementById("login");
+    const passwordInput = document.getElementById("password");
+    const togglePasswordBtn = document.getElementById("toggle-password");
+    const errorBox = document.getElementById("login-error");
+    const submitBtn = document.getElementById("login-submit");
+    const submitText = document.getElementById("login-submit-text");
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function showLoginContent() {
+      loginLoader?.classList.add("hidden");
+      loginContent?.classList.remove("hidden");
+    }
+
+    function setError(message) {
+      if (!errorBox) return;
+      errorBox.textContent = message;
+      errorBox.classList.remove("hidden");
+    }
+
+    function clearError() {
+      if (!errorBox) return;
+      errorBox.textContent = "";
+      errorBox.classList.add("hidden");
+    }
+
+    function setLoading(isLoading) {
+      if (!submitBtn || !submitText) return;
+      submitBtn.toggleAttribute("disabled", isLoading);
+      submitText.textContent = isLoading ? "Входим..." : "Войти";
+    }
+
+    async function ensureCsrfCookie() {
+      const response = await fetch(`${apiBaseUrl}/sanctum/csrf-cookie`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось получить CSRF-cookie.");
+      }
+    }
+
+    function getXsrfTokenFromCookie() {
+      const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    async function initLoginPage() {
+      const startedAt = performance.now();
+      let isAuthenticated = false;
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json().catch(() => ({}));
+          if (data?.user) {
+            isAuthenticated = true;
+          }
+        }
+      } catch (_) {}
+
+      const elapsed = performance.now() - startedAt;
+      const remaining = Math.max(0, MIN_LOADER_TIME - elapsed);
+
+      if (remaining > 0) {
+        await sleep(remaining);
+      }
+
+      if (isAuthenticated) {
+        window.location.replace("/cp/");
+        return;
+      }
+
+      showLoginContent();
+    }
+
+    togglePasswordBtn?.addEventListener("click", () => {
+      if (!passwordInput) return;
+
+      const isPassword = passwordInput.getAttribute("type") === "password";
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+      togglePasswordBtn.textContent = isPassword ? "Скрыть" : "Показать";
+    });
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearError();
+
+      const login = loginInput?.value?.trim() || "";
+      const password = passwordInput?.value || "";
+
+      if (!login || !password) {
+        setError("Заполните логин и пароль.");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await ensureCsrfCookie();
+
+        const xsrfToken = getXsrfTokenFromCookie();
+
+        const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
+          },
+          body: JSON.stringify({
+            login,
+            password,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.message || "Не удалось выполнить вход.");
+        }
+
+        window.location.href = "/cp/";
+      } catch (error) {
+        setError(error?.message || "Произошла ошибка.");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    initLoginPage();
+  </script>
+</BaseLayout>

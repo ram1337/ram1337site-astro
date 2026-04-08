@@ -46,14 +46,21 @@ const ogImage = image.startsWith("http")
     <script is:inline>
       (function () {
         try {
-          const stored = localStorage.getItem("theme");
-          const systemPrefersDark =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const theme = stored || (systemPrefersDark ? "dark" : "light");
+          const stored = localStorage.getItem("theme") || "system";
           const root = document.documentElement;
+          const media =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)");
 
-          if (theme === "dark") {
+          const systemPrefersDark = !!media?.matches;
+          const effectiveTheme =
+            stored === "system"
+              ? systemPrefersDark
+                ? "dark"
+                : "light"
+              : stored;
+
+          if (effectiveTheme === "dark") {
             root.classList.add("dark");
           } else {
             root.classList.remove("dark");
@@ -108,6 +115,8 @@ const ogImage = image.startsWith("http")
       </div></noscript
     >
     <!-- /Yandex.Metrika counter -->
+    <script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer
+    ></script>
   </head>
   <body
     class="min-h-screen flex flex-col bg-slate-50 text-slate-900
@@ -132,6 +141,12 @@ const ogImage = image.startsWith("http")
         <nav
           class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300"
         >
+          <a
+            href="/login/"
+            class="transition-colors hover:text-violet-500 dark:hover:text-violet-300"
+          >
+            ПУ
+          </a>
           <a
             href="/posts/"
             class="transition-colors hover:text-violet-500 dark:hover:text-violet-300"
@@ -159,8 +174,10 @@ const ogImage = image.startsWith("http")
                    shadow-sm transition hover:border-violet-400 hover:text-violet-600
                    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200
                    dark:hover:border-violet-400 dark:hover:text-violet-200"
-            aria-label="Переключить тему"
+            aria-label="Сменить тему"
+            title="Сменить тему"
           >
+            <span id="theme-icon-system" class="hidden">🖥️</span>
             <span id="theme-icon-sun" class="hidden">☀️</span>
             <span id="theme-icon-moon" class="hidden">🌙</span>
           </button>
@@ -187,40 +204,86 @@ const ogImage = image.startsWith("http")
       (function () {
         const root = document.documentElement;
         const btn = document.getElementById("theme-toggle");
-        const sun = document.getElementById("theme-icon-sun");
-        const moon = document.getElementById("theme-icon-moon");
+        const systemIcon = document.getElementById("theme-icon-system");
+        const sunIcon = document.getElementById("theme-icon-sun");
+        const moonIcon = document.getElementById("theme-icon-moon");
+        const media =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
 
-        if (!btn || !sun || !moon) return;
+        if (!btn || !systemIcon || !sunIcon || !moonIcon) return;
 
-        function getCurrentTheme() {
-          if (root.classList.contains("dark")) return "dark";
-          return "light";
-        }
-
-        function applyIcon(theme) {
-          if (theme === "dark") {
-            sun.classList.remove("hidden");
-            moon.classList.add("hidden");
-          } else {
-            sun.classList.add("hidden");
-            moon.classList.remove("hidden");
+        function getStoredTheme() {
+          try {
+            return localStorage.getItem("theme") || "system";
+          } catch (e) {
+            return "system";
           }
         }
 
-        applyIcon(getCurrentTheme());
+        function getEffectiveTheme(theme) {
+          if (theme === "system") {
+            return media?.matches ? "dark" : "light";
+          }
+
+          return theme;
+        }
+
+        function applyTheme(theme) {
+          const effectiveTheme = getEffectiveTheme(theme);
+
+          if (effectiveTheme === "dark") {
+            root.classList.add("dark");
+          } else {
+            root.classList.remove("dark");
+          }
+
+          systemIcon.classList.add("hidden");
+          sunIcon.classList.add("hidden");
+          moonIcon.classList.add("hidden");
+
+          if (theme === "system") {
+            systemIcon.classList.remove("hidden");
+            btn.setAttribute("title", "Тема: системная");
+            btn.setAttribute("aria-label", "Тема: системная");
+          } else if (theme === "light") {
+            sunIcon.classList.remove("hidden");
+            btn.setAttribute("title", "Тема: светлая");
+            btn.setAttribute("aria-label", "Тема: светлая");
+          } else {
+            moonIcon.classList.remove("hidden");
+            btn.setAttribute("title", "Тема: тёмная");
+            btn.setAttribute("aria-label", "Тема: тёмная");
+          }
+        }
+
+        function getNextTheme(theme) {
+          if (theme === "system") return "light";
+          if (theme === "light") return "dark";
+          return "system";
+        }
+
+        let currentTheme = getStoredTheme();
+        applyTheme(currentTheme);
 
         btn.addEventListener("click", () => {
-          const isDark = root.classList.toggle("dark");
-          const theme = isDark ? "dark" : "light";
+          currentTheme = getNextTheme(currentTheme);
 
           try {
-            localStorage.setItem("theme", theme);
+            localStorage.setItem("theme", currentTheme);
           } catch (e) {}
 
-          applyIcon(theme);
+          applyTheme(currentTheme);
+        });
+
+        media?.addEventListener?.("change", () => {
+          if (currentTheme === "system") {
+            applyTheme(currentTheme);
+          }
         });
       })();
     </script>
+
     <script is:inline>
       document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll("pre").forEach((pre) => {
