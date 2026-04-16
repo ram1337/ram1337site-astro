@@ -1,0 +1,296 @@
+---
+title: "Шифрование .env файлов"
+date: 2026-04-17
+tags: ["sops", "age", "env", "infosec", "иб", "безопасность", "macos"]
+description: "Схема шифрования локальных .env-файлов с помощью sops и age для безопасного хранения чувствительных данных"
+draft: false
+---
+
+На днях озадачился вещью прозаической - как хранить старые и не слишком часто используемые проекты на рабочей машине? А у меня их накопилось изрядно. Проектов много, живут они долго, поднимаются нерегулярно, а `.env` так и лежит себе в открытом виде
+
+Идея: храним секреты в зашифрованном `.env.enc`, а обычный `.env` держим только тогда, когда он действительно нужен. Для шифрования используем `sops` и `age`, а для удобства добавляем в оболочку команды `ce` для шифрования и `de` для дешифровки
+
+## Установка `sops` и `age`
+
+Ставим сами инструменты, которые будут делать магию
+
+```bash
+brew install sops age
+```
+
+## Генерация ключа age
+
+Далее создаем age ключ. Приватный ключ появится в файле `~/.config/sops/age/keys.txt`
+
+```bash
+mkdir -p ~/.config/sops/age
+age-keygen -o ~/.config/sops/age/keys.txt
+```
+
+Это, собственно, приватный ключ который нельзя светить
+
+## Одной командой создаем .sops.yaml и правим .gitignore
+
+Чтобы не заниматься однообразными действиями вручную в каждом проекте, удобно добавить в оболочку функцию, которая сразу создает `.sops.yaml` и аккуратно дописывает нужные правила в `.gitignore`
+
+```bash
+init_sops_env() {
+  emulate -L zsh
+  setopt pipefail localoptions
+
+  local sops_file=".sops.yaml"
+  local gitignore_file=".gitignore"
+  local age_key_file="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
+  local recipient="${SOPS_AGE_RECIPIENTS:-}"
+
+  if [[ -z "$recipient" ]]; then
+    if [[ ! -f "$age_key_file" ]]; then
+      echo "Ошибка: не найден age private key: $age_key_file"
+      echo "Создать ключ: age-keygen -o ~/.config/sops/age/keys.txt"
+      echo "Экспорт публичного ключа: export SOPS_AGE_RECIPIENTS='age1...'"
+      return 1
+    fi
+
+    recipient="$(grep -E '^# public key: age1' "$age_key_file" | head -n1 | sed 's/^# public key: //')"
+  fi
+
+  if [[ -z "$recipient" ]]; then
+    echo "Ошибка: не удалось определить public age key"
+    return 1
+  fi
+
+  if [[ -f "$sops_file" ]]; then
+    echo "Файл $sops_file уже существует"
+  else
+    cat > "$sops_file" <<EOF
+creation_rules:
+  - path_regex: \\.env(\\..*)?$
+    age: $recipient
+EOF
+    echo "Создан $sops_file"
+  fi
+
+  touch "$gitignore_file"
+
+  if [[ -s "$gitignore_file" ]] && [[ "$(tail -c 1 "$gitignore_file" 2>/dev/null)" != $'\n' ]]; then
+    printf '\n' >> "$gitignore_file"
+  fi
+
+  local line
+  for line in \
+    ".env" \
+    ".env.*" \
+    "!.env.example"
+  do
+    if ! grep -Fxq "$line" "$gitignore_file"; then
+      printf '%s\n' "$line" >> "$gitignore_file"
+      echo "Добавлено в $gitignore_file: $line"
+    fi
+  done
+
+  echo "Готово"
+}
+```
+
+После этого достаточно перечитать конфиг оболочки командой `source ~/.zshrc`, а затем в корне проекта выполнить `init_sops_env`. Команда создаст `.sops.yaml` и добавит в `.gitignore` такие строки:
+
+```gitignore
+.env
+.env.*
+!.env.example
+```
+
+Если же вы хотите хранить `.env.enc` в репозитории, в `.gitignore `нужно добавить исключения
+
+```gitignore
+!*.env.enc
+!*.env.*.enc
+```
+
+Что-то, разумеется, можно подправить под свои привычки и нейминги, тут уж каждый сам себе хозяин
+
+## Добавляем команды ce и de
+
+Для опять же удоства добавляем в оболочку команды:
+
+- `ce` шифрует .env в .env.enc
+- `ce -r` после шифрования спрашивает, удалить ли открытый файл
+- `ce -rf` удаляет его без лишних церемоний
+- `de` выполняет обратную операцию: дешифрует `.env.enc` обратно в `.env`
+
+```bash
+ce() {
+  emulate -L zsh
+  setopt pipefail localoptions
+
+  local remove_mode=""
+  local src_file=".env"
+  local enc_file=""
+  local arg=""
+
+  while [[ $# -gt 0 ]]; do
+    arg="$1"
+    case "$arg" in
+      -r)
+        remove_mode="confirm"
+        ;;
+      -rf)
+        remove_mode="force"
+        ;;
+      -*)
+        echo "Ошибка: неизвестный флаг '$arg'"
+        echo "Использование: ce [-r|-rf] [файл]"
+        return 1
+        ;;
+      *)
+        src_file="$arg"
+        ;;
+    esac
+    shift
+  done
+
+  if ! command -v sops >/dev/null 2>&1; then
+    echo "Ошибка: sops не найден, установите brew install sops age"
+    return 1
+  fi
+
+  if [[ ! -f "$src_file" ]]; then
+    echo "Ошибка: файл '$src_file' не найден"
+    return 1
+  fi
+
+  if [[ -z "${SOPS_AGE_KEY_FILE:-}" ]]; then
+    export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+  fi
+
+  if [[ ! -f "$SOPS_AGE_KEY_FILE" ]]; then
+    echo "Ошибка: age-ключ не найден: $SOPS_AGE_KEY_FILE"
+    return 1
+  fi
+
+  enc_file="${src_file}.enc"
+
+  sops --encrypt \
+    --input-type dotenv \
+    --output-type dotenv \
+    "$src_file" > "$enc_file" || {
+      echo "Ошибка: не удалось зашифровать '$src_file'"
+      rm -f "$enc_file"
+      return 1
+    }
+
+  chmod 600 "$enc_file" 2>/dev/null
+  echo "Зашифровано: $src_file -> $enc_file"
+
+  case "$remove_mode" in
+    confirm)
+      local reply
+      read -q "reply?Удалить открытый файл '$src_file'? [y/N] "
+      echo
+      if [[ "$reply" =~ ^[Yy]$ ]]; then
+        rm -f "$src_file"
+        echo "Удален: $src_file"
+      else
+        echo "Открытый файл не удален"
+      fi
+      ;;
+    force)
+      rm -f "$src_file"
+      echo "Удален: $src_file"
+      ;;
+  esac
+}
+
+de() {
+  emulate -L zsh
+  setopt pipefail localoptions
+
+  local enc_file=".env.enc"
+  local out_file=""
+  local arg=""
+
+  while [[ $# -gt 0 ]]; do
+    arg="$1"
+    case "$arg" in
+      -*)
+        echo "Ошибка: de не принимает флаги"
+        echo "Использование: de [файл.enc]"
+        return 1
+        ;;
+      *)
+        enc_file="$arg"
+        ;;
+    esac
+    shift
+  done
+
+  if ! command -v sops >/dev/null 2>&1; then
+    echo "Ошибка: sops не найден: brew install sops age"
+    return 1
+  fi
+
+  if [[ ! -f "$enc_file" ]]; then
+    echo "Ошибка: файл '$enc_file' не найден"
+    return 1
+  fi
+
+  if [[ -z "${SOPS_AGE_KEY_FILE:-}" ]]; then
+    export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+  fi
+
+  if [[ ! -f "$SOPS_AGE_KEY_FILE" ]]; then
+    echo "Ошибка: age-ключ не найден: $SOPS_AGE_KEY_FILE"
+    return 1
+  fi
+
+  if [[ "$enc_file" == *.enc ]]; then
+    out_file="${enc_file%.enc}"
+  else
+    out_file="${enc_file}.dec"
+  fi
+
+  sops --decrypt \
+    --input-type dotenv \
+    --output-type dotenv \
+    "$enc_file" > "$out_file" || {
+      echo "Ошибка: не удалось расшифровать '$enc_file'"
+      rm -f "$out_file"
+      return 1
+    }
+
+  chmod 600 "$out_file" 2>/dev/null
+  echo "Расшифровано: $enc_file -> $out_file"
+}
+```
+
+После этого снова перечитайте `~/.zshrc` командой `source ~/.zshrc`
+
+## Как с этим жить дальше
+
+Схема работы такая: в проекте у вас живет зашифрованный `.env.enc`. Перед началом работы выполняете `de`. Появляется обычный `.env`. Поработали, закончили, и жмете `ce -rf`. Открытый `.env` шифруется обратно и удаляется. Ничего особенного, просто не держим голые секреты на диске дольше, чем в них есть нужда
+
+Если вы используете не только `.env`, но и, скажем, `.env.local` / `.env.production`, команды работают и с ними:
+
+```bash
+ce .env.local
+ce -rf .env.local
+de .env.local.enc
+```
+
+## Что коммитить, а что нет
+
+Коммитить обычно можно `.sops.yaml`, `.env.example` (пример конфига без открытых кредсов) и, при желании, сам `.env.enc`, если вы решили хранить зашифрованный env в репозитории
+
+Естественно нельзя тащить в репу открытый `.env`, приватный ключ `~/.config/sops/age/keys.txt`, любые иные приватные ключи и вообще все, что содержит секреты в открытом виде
+
+Нужно ли коммитить `.sops.yaml`? Да, обычно нужно. Это не секрет, а конфиг. Публичный ключ там хранить можно, а приватный - нельзя. Все как обычно
+
+Нужно ли удалять `.env.enc`? Не обязательно, ибо таким образом есть возможность хранить в репе каноничные env переменные для команды
+
+Иными словами, рабочая модель выглядит так: в проекте лежит `.env.enc`, при необходимости вы делаете `de`, работаете, затем выполняете `ce -rf`. Уот и все
+
+## И наконец важная правда жизни
+
+Шифрование `.env` файлов в первую очередь защищает кредсы от необязательного длительного хранения их в plaintext на диске. Это просто разумная, взрослая защита, а не панацея
+
+Если меж тем кто-нибудь найдет вменяемый способ автоматизировать все это хозяйство и избавиться от ручного ввода `ce` и `de` без лишнего колдовства, [напишите мне на почту](/about/), буду признателен. Я удобного для себя варианта пока не сыскал. Все либо чересчур хитро, либо откровенная чертовщина
