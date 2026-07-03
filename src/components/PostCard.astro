@@ -8,11 +8,11 @@ interface Props {
 }
 
 const { post } = Astro.props as Props;
-const { slug, data } = post;
+const { id, data } = post;
 ---
 
 <a
-  href={`/posts/${slug}/`}
+  href={`/posts/${id}/`}
   class="group block rounded-xl border px-4 py-4 my-2 transition
          border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50
          dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-violet-400

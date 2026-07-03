@@ -9,6 +9,7 @@ draft: false
 Этот туториал показывает, как поднять корпоративный IKEv2 VPN-сервер на Ubuntu 22.04 с TLS-сертификатом от Let’s Encrypt, работающий на стандартных портах.
 
 Решение подходит для:
+
 - мобильных устройств (iOS / Android),
 - Windows и macOS,
 - постоянного VPN без клиентских костылей,
@@ -17,12 +18,12 @@ draft: false
 Используется strongSwan с EAP аутентификацией и публичным сертификатом.
 
 ## Что мы в итоге получим
+
 - IKEv2 VPN на стандартных портах 500/4500 UDP
 - TLS-сертификат от Let’s Encrypt (без самоподписанных CA)
 - Совместимость с нативными клиентами ОС
 - Автообновление сертификатов
 - Прозрачный доступ в интернет для клиентов
-
 
 ## Установка зависимостей
 
@@ -35,15 +36,15 @@ sudo apt install \
   libstrongswan-standard-plugins \
   libstrongswan-extra-plugins \
   certbot ufw cron -y
-  ```
+```
 
 Пояснение по содержимому:
+
 - strongswan — сам VPN
 - strongswan-pki — работа с сертификатами
 - certbot — получение сертификата Let’s Encrypt
 - ufw — firewall
 - cron — автообновление
-
 
 ### Получение TLS-сертификата (Let’s Encrypt)
 
@@ -122,6 +123,7 @@ conn ikev2
 ```
 
 Это базовые параметры логирования и управления сессиями.
+
 - IKEv2 — основной протокол
 - `compress=no` — компрессию лучше не использовать
 - `ike`, `esp` - длинный список для максимальной совместимости с клиентами, strongSwan сам выберет лучший алгоритм
@@ -146,9 +148,10 @@ user1 : EAP "password1"
 user2 : EAP "password2"
 ```
 
-## Запуск и автозапуск 
+## Запуск и автозапуск
 
 Включаем автозапуск strongswan.
+
 ```bash
 sudo systemctl start strongswan-starter
 sudo systemctl enable strongswan-starter
@@ -166,7 +169,7 @@ sudo ufw allow 500,4500/udp
 sudo ufw enable
 ```
 
-### Forwarding 
+### Forwarding
 
 В файле /etc/default/ufw поменяйте значение переменной на ACCEPT: `DEFAULT_FORWARD_POLICY="ACCEPT"`
 
@@ -186,12 +189,13 @@ COMMIT
 -A FORWARD --match policy --pol ipsec --dir in -s 10.15.6.0/24 -o ens3 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
 COMMIT
 ```
+
 - ens3 - замени на свой интерфейс
 - MSS-fix - критичен для мобильных клиентов
 
 ### Правила forward
 
-Под секцией *filter добавьте следующие правила
+Под секцией \*filter добавьте следующие правила
 
 ```ini
 -A ufw-before-forward --match policy --pol ipsec --dir in --proto esp -s 10.15.6.0/24 -j ACCEPT
@@ -200,7 +204,7 @@ COMMIT
 
 В файле `/etc/ufw/sysctl.conf` снимите комментарий со строки `net/ipv4/ip_forward=1`
 
-Перезагрузите ipsec 
+Перезагрузите ipsec
 
 ```bash
 ipsec reload

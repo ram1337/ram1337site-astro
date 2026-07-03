@@ -10,13 +10,35 @@ type Props = {
 const {
   title,
   description = "ram1337 персональный сайт",
-  image = "/og/default.jpg",
 } = Astro.props as Props;
 
+const { image } = Astro.props as Props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = image.startsWith("http")
-  ? image
-  : new URL(image, Astro.site).toString();
+const fallbackImage = "/og/default.jpg";
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
+const ogImageEndpoint = import.meta.env.PUBLIC_OG_IMAGE_ENDPOINT ?? "/og-image";
+
+function resolveImageUrl(imagePath: string) {
+  return imagePath.startsWith("http")
+    ? imagePath
+    : new URL(imagePath, Astro.site).toString();
+}
+
+function buildBackendOgImageUrl() {
+  if (!apiBaseUrl && !ogImageEndpoint.startsWith("http")) return undefined;
+
+  const endpoint = new URL(ogImageEndpoint, apiBaseUrl || Astro.site);
+  endpoint.searchParams.set("title", title);
+  endpoint.searchParams.set("description", description);
+  endpoint.searchParams.set("url", canonical.toString());
+  endpoint.searchParams.set("path", Astro.url.pathname);
+
+  return endpoint.toString();
+}
+
+const ogImage = image
+  ? resolveImageUrl(image)
+  : buildBackendOgImageUrl() ?? resolveImageUrl(fallbackImage);
 ---
 
 <html lang="ru" class="h-full">

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import TelegramComments from "../components/TelegramComments.astro";
 import type { CollectionEntry } from "astro:content";
 
 type Post = CollectionEntry<"posts">;
@@ -10,7 +11,16 @@ interface Props {
 }
 
 const { frontmatter } = Astro.props as Props;
-const { title, date, description, tags = [] } = frontmatter;
+const {
+  title,
+  date,
+  description,
+  tags = [],
+  telegramComments,
+  telegramCommentsLimit,
+  telegramDiscussion,
+  telegramDiscussionPostId,
+} = frontmatter;
 ---
 
 <BaseLayout title={title} description={description}>
@@ -82,5 +92,12 @@ const { title, date, description, tags = [] } = frontmatter;
     >
       <slot />
     </section>
+
+    <TelegramComments
+      enabled={telegramComments}
+      commentsLimit={telegramCommentsLimit}
+      discussion={telegramDiscussion}
+      postId={telegramDiscussionPostId}
+    />
   </article>
 </BaseLayout>
