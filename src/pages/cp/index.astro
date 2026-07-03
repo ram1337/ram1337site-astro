@@ -456,7 +456,46 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 
         function getXsrfTokenFromCookie() {
           const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-          return match ? decodeURIComponent(match[1]) : "";
+          return match ? decodeURIComponent(match[1].replace(/\+/g, "%20")) : "";
+        }
+
+        function getCsrfHeaders() {
+          const xsrfToken = getXsrfTokenFromCookie();
+
+          if (!xsrfToken) {
+            throw new Error(
+              "Не удалось прочитать XSRF-TOKEN. Проверьте настройки cookie на API.",
+            );
+          }
+
+          return {
+            "X-XSRF-TOKEN": xsrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+          };
+        }
+
+        async function postJson(path, body) {
+          const createRequest = () =>
+            fetch(`${apiBaseUrl}${path}`, {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...getCsrfHeaders(),
+              },
+              body: JSON.stringify(body),
+            });
+
+          await ensureCsrfCookie();
+          let response = await createRequest();
+
+          if (response.status === 419) {
+            await ensureCsrfCookie();
+            response = await createRequest();
+          }
+
+          return response;
         }
 
         async function fetchCurrentUser() {
@@ -490,20 +529,7 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           logoutBtn.setAttribute("disabled", "disabled");
 
           try {
-            await ensureCsrfCookie();
-
-            const xsrfToken = getXsrfTokenFromCookie();
-
-            const response = await fetch(`${apiBaseUrl}/api/auth/logout`, {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
-              },
-              body: JSON.stringify({}),
-            });
+            const response = await postJson("/api/auth/logout", {});
 
             if (!response.ok) {
               throw new Error("Не удалось выйти из системы");
@@ -539,23 +565,10 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           setPasswordLoading(true);
 
           try {
-            await ensureCsrfCookie();
-
-            const xsrfToken = getXsrfTokenFromCookie();
-
-            const response = await fetch(`${apiBaseUrl}/api/auth/password`, {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
-              },
-              body: JSON.stringify({
-                current_password: currentPassword,
-                password: newPassword,
-                password_confirmation: newPasswordConfirmation,
-              }),
+            const response = await postJson("/api/auth/password", {
+              current_password: currentPassword,
+              password: newPassword,
+              password_confirmation: newPasswordConfirmation,
             });
 
             const data = await response.json().catch(() => ({}));

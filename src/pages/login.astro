@@ -171,7 +171,46 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 
     function getXsrfTokenFromCookie() {
       const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-      return match ? decodeURIComponent(match[1]) : "";
+      return match ? decodeURIComponent(match[1].replace(/\+/g, "%20")) : "";
+    }
+
+    function getCsrfHeaders() {
+      const xsrfToken = getXsrfTokenFromCookie();
+
+      if (!xsrfToken) {
+        throw new Error(
+          "Не удалось прочитать XSRF-TOKEN. Проверьте настройки cookie на API.",
+        );
+      }
+
+      return {
+        "X-XSRF-TOKEN": xsrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      };
+    }
+
+    async function postJson(path, body) {
+      const createRequest = () =>
+        fetch(`${apiBaseUrl}${path}`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...getCsrfHeaders(),
+          },
+          body: JSON.stringify(body),
+        });
+
+      await ensureCsrfCookie();
+      let response = await createRequest();
+
+      if (response.status === 419) {
+        await ensureCsrfCookie();
+        response = await createRequest();
+      }
+
+      return response;
     }
 
     async function initLoginPage() {
@@ -233,22 +272,9 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
       setLoading(true);
 
       try {
-        await ensureCsrfCookie();
-
-        const xsrfToken = getXsrfTokenFromCookie();
-
-        const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            ...(xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {}),
-          },
-          body: JSON.stringify({
-            login,
-            password,
-          }),
+        const response = await postJson("/api/auth/login", {
+          login,
+          password,
         });
 
         const data = await response.json().catch(() => ({}));
