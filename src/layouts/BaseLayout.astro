@@ -5,6 +5,7 @@ type Props = {
   title: string;
   description?: string;
   image?: string;
+  ogImageSlug?: string;
 };
 
 const {
@@ -12,7 +13,7 @@ const {
   description = "ram1337 персональный сайт",
 } = Astro.props as Props;
 
-const { image } = Astro.props as Props;
+const { image, ogImageSlug } = Astro.props as Props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const fallbackImage = "/og/default.jpg";
 const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
@@ -24,10 +25,18 @@ function resolveImageUrl(imagePath: string) {
     : new URL(imagePath, Astro.site).toString();
 }
 
-function buildBackendOgImageUrl() {
+function buildBackendOgImageUrl(slug?: string) {
   if (!apiBaseUrl && !ogImageEndpoint.startsWith("http")) return undefined;
 
   const endpoint = new URL(ogImageEndpoint, apiBaseUrl || Astro.site);
+
+  if (slug) {
+    const basePath = endpoint.pathname.replace(/\/$/, "");
+    endpoint.pathname = `${basePath}/${encodeURIComponent(slug)}.png`;
+
+    return endpoint.toString();
+  }
+
   endpoint.searchParams.set("title", title);
   endpoint.searchParams.set("path", Astro.url.pathname);
 
@@ -36,7 +45,7 @@ function buildBackendOgImageUrl() {
 
 const ogImage = image
   ? resolveImageUrl(image)
-  : buildBackendOgImageUrl() ?? resolveImageUrl(fallbackImage);
+  : buildBackendOgImageUrl(ogImageSlug) ?? resolveImageUrl(fallbackImage);
 ---
 
 <html lang="ru" class="h-full">
@@ -46,6 +55,12 @@ const ogImage = image
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="/home/ram1337/ RSS"
+      href={new URL("/rss.xml", Astro.site)}
+    />
 
     {/* Open Graph */}
     <meta property="og:type" content="website" />
@@ -186,10 +201,43 @@ const ogImage = image
             Контакты
           </a>
 
+          <a
+            href="/rss.xml"
+            class="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full
+                   border border-slate-200 bg-white text-orange-500
+                   shadow-sm transition hover:border-orange-400 hover:text-orange-600
+                   dark:border-slate-700 dark:bg-slate-900 dark:text-orange-300
+                   dark:hover:border-orange-400 dark:hover:text-orange-200"
+            aria-label="RSS-лента"
+            title="RSS-лента"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 5.5c7.46 0 13.5 6.04 13.5 13.5"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+              <path
+                d="M5 11c4.42 0 8 3.58 8 8"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+              <circle cx="6.2" cy="17.8" r="1.7" fill="currentColor" />
+            </svg>
+          </a>
+
           <button
             id="theme-toggle"
             type="button"
-            class="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full
+            class="inline-flex h-8 w-8 items-center justify-center rounded-full
                    border border-slate-200 bg-white text-slate-700 text-sm
                    shadow-sm transition hover:border-violet-400 hover:text-violet-600
                    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200

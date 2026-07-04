@@ -12,6 +12,9 @@ export default defineConfig({
 
   site: "https://ram1337.dev",
   vite: {
+    server: {
+      allowedHosts: ["host.docker.internal"],
+    },
     plugins: [tailwindcss()],
   },
 });
