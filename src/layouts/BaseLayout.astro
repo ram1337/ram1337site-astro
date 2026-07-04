@@ -29,8 +29,6 @@ function buildBackendOgImageUrl() {
 
   const endpoint = new URL(ogImageEndpoint, apiBaseUrl || Astro.site);
   endpoint.searchParams.set("title", title);
-  endpoint.searchParams.set("description", description);
-  endpoint.searchParams.set("url", canonical.toString());
   endpoint.searchParams.set("path", Astro.url.pathname);
 
   return endpoint.toString();
