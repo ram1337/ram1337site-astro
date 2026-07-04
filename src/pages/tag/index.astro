@@ -18,11 +18,11 @@ for (const post of posts) {
 }
 
 const tags = Array.from(tagCounts.entries()).sort((a, b) =>
-  a[0].localeCompare(b[0], "ru")
+  a[0].localeCompare(b[0], "ru"),
 );
 ---
 
-<BaseLayout title="Теги — ram1337" description="Список тегов блога Рамиля.">
+<BaseLayout title="Теги — ram1337" description="Список тегов блога.">
   <section class="space-y-4">
     <header class="space-y-2">
       <p

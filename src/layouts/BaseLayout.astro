@@ -8,16 +8,15 @@ type Props = {
   ogImageSlug?: string;
 };
 
-const {
-  title,
-  description = "ram1337 персональный сайт",
-} = Astro.props as Props;
+const { title, description = "ram1337 персональный сайт" } =
+  Astro.props as Props;
 
 const { image, ogImageSlug } = Astro.props as Props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const fallbackImage = "/og/default.jpg";
+const fallbackImage = "/og/default.png";
 const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
-const ogImageEndpoint = import.meta.env.PUBLIC_OG_IMAGE_ENDPOINT ?? "/og-image";
+const ogImageEndpoint =
+  import.meta.env.PUBLIC_OG_IMAGE_ENDPOINT ?? "/api/og-image";
 
 function resolveImageUrl(imagePath: string) {
   return imagePath.startsWith("http")
@@ -25,27 +24,19 @@ function resolveImageUrl(imagePath: string) {
     : new URL(imagePath, Astro.site).toString();
 }
 
-function buildBackendOgImageUrl(slug?: string) {
-  if (!apiBaseUrl && !ogImageEndpoint.startsWith("http")) return undefined;
-
-  const endpoint = new URL(ogImageEndpoint, apiBaseUrl || Astro.site);
-
-  if (slug) {
-    const basePath = endpoint.pathname.replace(/\/$/, "");
-    endpoint.pathname = `${basePath}/${encodeURIComponent(slug)}.png`;
-
-    return endpoint.toString();
-  }
-
-  endpoint.searchParams.set("title", title);
-  endpoint.searchParams.set("path", Astro.url.pathname);
+function resolveOgImageSlugUrl(slug: string) {
+  const endpoint = new URL(ogImageEndpoint, apiBaseUrl);
+  const basePath = endpoint.pathname.replace(/\/$/, "");
+  endpoint.pathname = `${basePath}/${encodeURIComponent(slug)}.png`;
 
   return endpoint.toString();
 }
 
 const ogImage = image
   ? resolveImageUrl(image)
-  : buildBackendOgImageUrl(ogImageSlug) ?? resolveImageUrl(fallbackImage);
+  : apiBaseUrl && ogImageSlug
+    ? resolveOgImageSlugUrl(ogImageSlug)
+    : resolveImageUrl(fallbackImage);
 ---
 
 <html lang="ru" class="h-full">
@@ -222,15 +213,13 @@ const ogImage = image
                 d="M5 5.5c7.46 0 13.5 6.04 13.5 13.5"
                 stroke="currentColor"
                 stroke-width="2.4"
-                stroke-linecap="round"
-              />
+                stroke-linecap="round"></path>
               <path
                 d="M5 11c4.42 0 8 3.58 8 8"
                 stroke="currentColor"
                 stroke-width="2.4"
-                stroke-linecap="round"
-              />
-              <circle cx="6.2" cy="17.8" r="1.7" fill="currentColor" />
+                stroke-linecap="round"></path>
+              <circle cx="6.2" cy="17.8" r="1.7" fill="currentColor"></circle>
             </svg>
           </a>
 

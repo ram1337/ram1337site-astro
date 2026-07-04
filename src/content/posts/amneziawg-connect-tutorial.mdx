@@ -17,10 +17,12 @@ draft: false
 Этот гайд описывает подключение к VPN на базе **AmneziaWG**.
 
 **AmneziaWG** — это модифицированная версия WireGuard, предназначенная для:
+
 - маскировки VPN-трафика под “обычный” UDP;
 - более стабильной работы в жёстко фильтруемых сетях.
 
 Технически это всё ещё WireGuard, но:
+
 - с изменённым handshake;
 - с дополнительными параметрами маскировки;
 - и **обычные WireGuard-клиенты тут не подойдут**.
@@ -42,13 +44,19 @@ draft: false
 ## Выбери свою операционную систему
 
 <nav class="not-prose my-6 flex flex-wrap gap-3 text-sm">
-  <a href="#android" class="rounded-full border px-3 py-1 hover:text-violet-500">
+  <a
+    href="#android"
+    class="rounded-full border px-3 py-1 hover:text-violet-500"
+  >
     Android
   </a>
   <a href="#ios" class="rounded-full border px-3 py-1 hover:text-violet-500">
     iOS
   </a>
-  <a href="#windows" class="rounded-full border px-3 py-1 hover:text-violet-500">
+  <a
+    href="#windows"
+    class="rounded-full border px-3 py-1 hover:text-violet-500"
+  >
     Windows
   </a>
   <a href="#macos" class="rounded-full border px-3 py-1 hover:text-violet-500">
@@ -65,7 +73,7 @@ draft: false
 3. Нажми **Добавить конфигурацию**
 4. Импортируй:
    - файл конфигурации  
-   **или**
+     **или**
    - QR-код
 5. Дай профилю имя
 6. Включи VPN
@@ -83,7 +91,7 @@ draft: false
 1. Установи **Amnezia WG** из App Store: https://apps.apple.com/ru/app/amneziawg/id6478942365
 2. Открой приложение
 3. Добавь конфигурацию:
-   - импорт файла  
+   - импорт файла
    - или сканирование QR-кода
 4. Разреши добавление VPN-профиля
 5. Включи соединение
@@ -96,7 +104,7 @@ draft: false
 2. Установи приложение
 3. Запусти Amnezia WG
 4. Импортируй конфигурацию:
-   - файл  
+   - файл
    - или QR-код
 5. Активируй профиль
 
