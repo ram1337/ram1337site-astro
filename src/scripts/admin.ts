@@ -74,6 +74,14 @@ interface AdminUser {
   blocked?: boolean;
   blocked_at?: string | null;
   paid_until?: string | null;
+  is_paid?: boolean;
+  payment_status?: "paid" | "unpaid" | "expired";
+  payment?: {
+    paid_until?: string | null;
+    is_paid?: boolean;
+    status?: "paid" | "unpaid" | "expired";
+    days_left?: number;
+  } | null;
   vpn_user?: AdminVpnUser | null;
 }
 
@@ -481,35 +489,57 @@ function normalizeUser(row: Partial<AdminUser>): AdminUser {
     account_user_id: anonymous ? null : row.account_user_id ?? row.id ?? null,
     vpn_user_id: anonymous
       ? row.vpn_user_id ?? row.vpn_user?.id ?? null
-      : row.vpn_user_id ?? row.vpn_user?.id ?? null,
+      : row.vpn_user_id ?? null,
     role: anonymous ? null : row.role ?? "user",
     blocked: anonymous ? false : Boolean(row.blocked),
-    paid_until: anonymous
-      ? row.vpn_user?.paid_until ?? row.paid_until ?? null
-      : row.vpn_user?.paid_until ?? null,
+    paid_until: row.vpn_user?.paid_until ?? row.payment?.paid_until ?? row.paid_until ?? null,
     vpn_user: row.vpn_user ?? null,
   };
 }
 
 function getVpnPaidUntil(user: AdminUser): string | null {
-  if (user.vpn_user?.paid_until) return user.vpn_user.paid_until;
-  return isAnonymousUser(user) ? user.paid_until ?? null : null;
+  return (
+    user.vpn_user?.paid_until ??
+    user.vpn_user?.payment?.paid_until ??
+    user.payment?.paid_until ??
+    user.paid_until ??
+    null
+  );
+}
+
+function getTodayDateKey(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDateKey(value: string | null): string | null {
+  if (!value) return null;
+  const dateMatch = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (dateMatch?.[1]) return dateMatch[1];
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 function getVpnPaymentStatus(user: AdminUser): "paid" | "unpaid" | "expired" {
   const vpnUser = user.vpn_user;
-  const status = vpnUser?.payment_status || vpnUser?.payment?.status;
-
-  if (status) return status;
-  if (vpnUser?.is_paid === true || vpnUser?.payment?.is_paid === true) {
+  if (
+    user.payment?.is_paid === true ||
+    user.is_paid === true ||
+    vpnUser?.payment?.is_paid === true ||
+    vpnUser?.is_paid === true
+  ) {
     return "paid";
   }
 
   const paidUntil = getVpnPaidUntil(user);
   if (!paidUntil) return "unpaid";
-  return paidUntil < new Date().toISOString().slice(0, 10)
-    ? "expired"
-    : "paid";
+  const paidUntilKey = getDateKey(paidUntil);
+  if (!paidUntilKey) return "unpaid";
+  return paidUntilKey > getTodayDateKey() ? "paid" : "expired";
 }
 
 function createVpnPaymentCell(user: AdminUser): HTMLTableCellElement {
@@ -535,7 +565,11 @@ function createVpnPaymentCell(user: AdminUser): HTMLTableCellElement {
       paymentStatus === "expired"
         ? "text-xs text-rose-600 dark:text-rose-300"
         : "text-xs text-slate-500 dark:text-slate-400",
-      paidUntil || "Срок не указан",
+      paidUntil
+        ? paymentStatus === "paid"
+          ? `Оплачен до ${paidUntil.slice(0, 10)}`
+          : `Срок закончился ${paidUntil.slice(0, 10)}`
+        : "Срок не указан",
     ),
   );
   paymentCell.append(content);
@@ -1019,12 +1053,11 @@ function getIkev2AccessCredentials(access?: VpnAccess): {
 function renderIkev2CredentialForms(user: AdminUser): void {
   if (!userIkev2Accesses) return;
   userIkev2Accesses.replaceChildren();
-  const vpnUser = user.vpn_user;
   const ikev2Servers = servers.filter(
     (server) => server.type.toLowerCase() === "ikev2",
   );
 
-  if (!vpnUser || ikev2Servers.length === 0) return;
+  if (ikev2Servers.length === 0) return;
 
   const heading = createElement(
     "div",
@@ -1043,6 +1076,18 @@ function renderIkev2CredentialForms(user: AdminUser): void {
     ),
   );
   userIkev2Accesses.append(heading);
+
+  const vpnUserId = Number(user.vpn_user_id);
+  if (!Number.isFinite(vpnUserId) || vpnUserId <= 0) {
+    userIkev2Accesses.append(
+      createElement(
+        "p",
+        "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+        "Для выдачи IKEv2 нужно сначала создать VPN-профиль пользователя",
+      ),
+    );
+    return;
+  }
 
   ikev2Servers.forEach((server) => {
     const access = getAccesses(user).find(
@@ -1129,7 +1174,7 @@ function renderIkev2CredentialForms(user: AdminUser): void {
     error.setAttribute("role", "alert");
     footer.append(error, submit);
 
-    form.dataset.vpnUserId = String(vpnUser.id);
+    form.dataset.vpnUserId = String(vpnUserId);
     form.dataset.serverSlug = server.slug;
     form.append(header, loginLabel, passwordLabel, footer);
     userIkev2Accesses.append(form);
