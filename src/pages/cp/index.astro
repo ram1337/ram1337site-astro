@@ -1499,8 +1499,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             payment.status ||
             (isPaid ? "paid" : "unpaid");
           const formattedDate = formatPaymentDate(paidUntil);
-          let title = "Сервер не оплачен";
-          let badgeLabel = "Не оплачено";
+          let title = paidUntil ? "Сервер не оплачен" : "Не указана дата";
+          let badgeLabel = paidUntil ? "Не оплачено" : "Не указана дата";
           let details = "";
           let tone = "unpaid";
 

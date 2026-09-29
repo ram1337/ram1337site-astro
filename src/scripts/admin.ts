@@ -550,7 +550,7 @@ function createVpnPaymentCell(user: AdminUser): HTMLTableCellElement {
   const labels = {
     paid: "Оплачено",
     expired: "Просрочено",
-    unpaid: "Не оплачено",
+    unpaid: paidUntil ? "Не оплачено" : "Не указана дата",
   };
   const tones = {
     paid: "green",
@@ -569,7 +569,7 @@ function createVpnPaymentCell(user: AdminUser): HTMLTableCellElement {
         ? paymentStatus === "paid"
           ? `Оплачен до ${paidUntil.slice(0, 10)}`
           : `Срок закончился ${paidUntil.slice(0, 10)}`
-        : "Срок не указан",
+        : "Не указана дата",
     ),
   );
   paymentCell.append(content);
@@ -1199,7 +1199,7 @@ function renderUserVpnUser(user: AdminUser): void {
     const paymentLabels = {
       paid: "Оплачено",
       expired: "Просрочено",
-      unpaid: "Не оплачено",
+      unpaid: paidUntil ? "Не оплачено" : "Не указана дата",
     };
     const paymentTones = {
       paid: "green",
@@ -1273,10 +1273,11 @@ function fillUserDetail(user: AdminUser): void {
   if (userDetailTitle) userDetailTitle.textContent = `${getUserLogin(user)} · #${stableId || "-"}`;
   if (userDetailType) {
     const paymentStatus = getVpnPaymentStatus(user);
+    const paidUntil = getVpnPaidUntil(user);
     const paymentLabels = {
       paid: "Оплачено",
       expired: "Просрочено",
-      unpaid: "Не оплачено",
+      unpaid: paidUntil ? "Не оплачено" : "Не указана дата",
     };
     const paymentTones = {
       paid: "green",
@@ -1288,7 +1289,6 @@ function fillUserDetail(user: AdminUser): void {
       badge(anonymous ? "VPN без аккаунта" : "Аккаунт", anonymous ? "neutral" : "green"),
       badge(paymentLabels[paymentStatus], paymentTones[paymentStatus]),
     );
-    const paidUntil = getVpnPaidUntil(user);
     if (paidUntil) {
       userDetailType.append(
         createElement(
