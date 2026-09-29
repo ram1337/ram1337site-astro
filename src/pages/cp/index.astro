@@ -1,7 +1,5 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-
-const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 ---
 
 <BaseLayout title="Панель управления - ram1337">
@@ -66,13 +64,95 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
             </p>
           </div>
 
-          <button
-            id="logout-btn"
-            type="button"
-            class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="telegram-link-btn"
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-500 dark:hover:bg-sky-400"
+            >
+              Привязать Telegram
+            </button>
+            <a
+              id="admin-link"
+              href="/admin/"
+              class="hidden items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 dark:bg-violet-500 dark:hover:bg-violet-400"
+            >
+              Админка
+            </a>
+            <button
+              id="logout-btn"
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+            >
+              Выйти
+            </button>
+          </div>
+        </div>
+        <div
+          id="telegram-link-result"
+          class="mt-4 hidden rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-100"
+          role="status"
+        >
+          <p id="telegram-link-message"></p>
+          <p
+            id="telegram-link-expires"
+            class="mt-1 text-xs text-sky-700 dark:text-sky-300"
+          ></p>
+          <div id="telegram-token-wrap" class="mt-3 hidden space-y-2">
+            <label
+              for="telegram-start-token"
+              class="block text-xs font-medium text-sky-800 dark:text-sky-200"
+            >
+              Код привязки
+            </label>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <input
+                id="telegram-start-token"
+                type="text"
+                readonly
+                class="h-10 min-w-0 flex-1 rounded-lg border border-sky-200 bg-white px-3 font-mono text-sm text-slate-900 dark:border-sky-800 dark:bg-slate-950 dark:text-slate-100"
+              />
+              <button
+                id="telegram-token-copy"
+                type="button"
+                class="inline-flex h-10 items-center justify-center rounded-lg border border-sky-300 px-3 text-sm font-medium text-sky-800 hover:bg-sky-100 disabled:opacity-60 dark:border-sky-700 dark:text-sky-200 dark:hover:bg-sky-900/50"
+              >
+                Копировать
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          id="telegram-link-error"
+          class="mt-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+          role="alert"
+        ></div>
+      </section>
+
+      <section
+        id="vpn-profile"
+        class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+      >
+        <div class="space-y-2">
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
           >
-            Выйти
-          </button>
+            VPN-профиль
+          </p>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-50">
+            Оплата VPN
+          </h3>
+        </div>
+        <div
+          id="vpn-profile-empty"
+          class="mt-4 hidden rounded-lg border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400"
+        >
+          VPN-профиль не привязан.
+        </div>
+        <div
+          id="vpn-profile-details"
+          class="mt-4 divide-y divide-slate-200 dark:divide-slate-800"
+        >
         </div>
       </section>
 
@@ -175,49 +255,97 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
         </form>
       </section>
 
-      <section
-        class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
-      >
-        <div class="mb-5 space-y-2">
+      <section aria-labelledby="vpn-servers-title" class="space-y-5">
+        <div class="space-y-2">
           <p
             class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
           >
-            Серверы
+            VPN
           </p>
+          <h3
+            id="vpn-servers-title"
+            class="text-lg font-semibold text-slate-900 dark:text-slate-50"
+          >
+            Конфигурации серверов
+          </h3>
         </div>
 
         <div
           id="servers-loading"
-          class="hidden rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300"
+          role="status"
+          class="hidden rounded-lg border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-300"
         >
-          Загружаем список серверов...
+          Загружаем VPN-серверы...
         </div>
 
         <div
           id="servers-error"
-          class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
+          role="alert"
+          class="hidden items-center justify-between gap-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
         >
+          <span id="servers-error-text"></span>
+          <button
+            id="servers-retry"
+            type="button"
+            class="shrink-0 rounded-lg border border-rose-300 px-3 py-2 text-sm font-medium transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:hover:bg-rose-900/50"
+          >
+            Повторить
+          </button>
         </div>
 
         <div
           id="servers-empty"
-          class="hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/40"
+          class="hidden rounded-lg border border-dashed border-slate-300 bg-white/70 p-5 dark:border-slate-700 dark:bg-slate-900/50"
         >
           <p class="text-sm text-slate-600 dark:text-slate-400">
-            Пока серверов не видать.
+            Доступных VPN-серверов пока нет.
           </p>
         </div>
 
-        <div id="servers-list" class="hidden grid gap-4 md:grid-cols-2"></div>
+        <div id="servers-list" class="hidden grid grid-cols-1 gap-4"></div>
       </section>
 
-      <script is:inline define:vars={{ apiBaseUrl }}>
+      <script>
+        import {
+          authorizedFetch,
+          clearAuthSession,
+          getAuthToken,
+          saveAuthUser,
+        } from "../../scripts/auth";
+
         const loadingBox = document.getElementById("cp-loading");
         const errorBox = document.getElementById("cp-error");
         const contentBox = document.getElementById("cp-content");
         const userName = document.getElementById("cp-user-name");
         const userMeta = document.getElementById("cp-user-meta");
+        const vpnProfileDetails = document.getElementById(
+          "vpn-profile-details",
+        );
+        const vpnProfileEmpty = document.getElementById("vpn-profile-empty");
+        const adminLink = document.getElementById("admin-link");
         const logoutBtn = document.getElementById("logout-btn");
+        const telegramLinkBtn = document.getElementById("telegram-link-btn");
+        const telegramLinkResult = document.getElementById(
+          "telegram-link-result",
+        );
+        const telegramLinkMessage = document.getElementById(
+          "telegram-link-message",
+        );
+        const telegramLinkExpires = document.getElementById(
+          "telegram-link-expires",
+        );
+        const telegramTokenWrap = document.getElementById(
+          "telegram-token-wrap",
+        );
+        const telegramStartToken = document.getElementById(
+          "telegram-start-token",
+        );
+        const telegramTokenCopy = document.getElementById(
+          "telegram-token-copy",
+        );
+        const telegramLinkError = document.getElementById(
+          "telegram-link-error",
+        );
 
         const passwordForm = document.getElementById("password-form");
         const currentPasswordInput =
@@ -237,11 +365,42 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 
         const serversLoadingBox = document.getElementById("servers-loading");
         const serversErrorBox = document.getElementById("servers-error");
+        const serversErrorText = document.getElementById("servers-error-text");
+        const serversRetryBtn = document.getElementById("servers-retry");
         const serversEmptyBox = document.getElementById("servers-empty");
         const serversListBox = document.getElementById("servers-list");
 
+        let vpnServers = [];
+        const serverLocationCollator = new Intl.Collator("ru", {
+          numeric: true,
+          sensitivity: "base",
+        });
+
+        function redirectToLogin() {
+          clearAuthSession();
+          window.location.replace("/login/");
+        }
+
+        async function protectedFetch(path, options = {}) {
+          if (!getAuthToken()) {
+            redirectToLogin();
+            throw new Error("Для продолжения необходимо войти в систему.");
+          }
+
+          const response = await authorizedFetch(path, options);
+
+          if (response.status === 401) {
+            redirectToLogin();
+            throw new Error("Сессия истекла. Войдите в систему снова.");
+          }
+
+          return response;
+        }
+
         function setServersLoading(isLoading) {
           if (!serversLoadingBox) return;
+
+          serversRetryBtn?.toggleAttribute("disabled", isLoading);
 
           if (isLoading) {
             serversLoadingBox.classList.remove("hidden");
@@ -251,15 +410,17 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
         }
 
         function showServersError(message) {
-          if (!serversErrorBox) return;
-          serversErrorBox.textContent = message;
+          if (!serversErrorBox || !serversErrorText) return;
+          serversErrorText.textContent = message;
           serversErrorBox.classList.remove("hidden");
+          serversErrorBox.classList.add("flex");
         }
 
         function hideServersError() {
-          if (!serversErrorBox) return;
-          serversErrorBox.textContent = "";
+          if (!serversErrorBox || !serversErrorText) return;
+          serversErrorText.textContent = "";
           serversErrorBox.classList.add("hidden");
+          serversErrorBox.classList.remove("flex");
         }
 
         function showServersEmpty() {
@@ -271,8 +432,629 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           serversEmptyBox?.classList.add("hidden");
         }
 
+        function createElement(tagName, className, text) {
+          const element = document.createElement(tagName);
+          element.className = className;
+
+          if (text !== undefined) {
+            element.textContent = text;
+          }
+
+          return element;
+        }
+
+        function appendDetailRow(list, label, value) {
+          const row = createElement(
+            "div",
+            "flex min-w-0 items-start justify-between gap-4",
+          );
+          const term = createElement(
+            "dt",
+            "shrink-0 text-slate-500 dark:text-slate-400",
+            label,
+          );
+          const description = createElement(
+            "dd",
+            "min-w-0 break-words text-right font-medium text-slate-800 dark:text-slate-200",
+            value || "-",
+          );
+
+          row.append(term, description);
+          list.append(row);
+        }
+
+        function getTextValue(value) {
+          return typeof value === "string" ? value.trim() : "";
+        }
+
+        function getServerCountryName(server) {
+          return (
+            getTextValue(server.country_name) || getTextValue(server.country)
+          );
+        }
+
+        function getServerFlag(server) {
+          return (
+            getTextValue(server.country_flag_emoji) ||
+            getTextValue(server.emoji_flag)
+          );
+        }
+
+        function getServerLocation(server) {
+          const countryName = getServerCountryName(server);
+
+          if (!countryName) return "";
+          return getTextValue(server.city);
+        }
+
+        function getServerTypeLabel(type) {
+          const normalizedType = getTextValue(type).toLowerCase();
+          const labels = {
+            ikev2: "IKEv2",
+            amneziawg: "AmneziaWG",
+            wireguard: "Wireguard",
+          };
+
+          return labels[normalizedType] || getTextValue(type) || "Не указан";
+        }
+
+        function getServerTutorialUrl(type) {
+          const normalizedType = getTextValue(type).toLowerCase();
+          const tutorials = {
+            ikev2: "/posts/ikev2-connect-tutorial/",
+            amneziawg: "/posts/amneziawg-connect-tutorial/",
+            wireguard: "/posts/wireguard-connect-tutorial/",
+          };
+
+          return tutorials[normalizedType] || "";
+        }
+
+        function compareServersByLocation(left, right) {
+          const leftValues = [
+            getServerCountryName(left),
+            getTextValue(left.city),
+            getTextValue(left.slug),
+          ];
+          const rightValues = [
+            getServerCountryName(right),
+            getTextValue(right.city),
+            getTextValue(right.slug),
+          ];
+
+          for (let index = 0; index < leftValues.length; index += 1) {
+            const result = serverLocationCollator.compare(
+              leftValues[index],
+              rightValues[index],
+            );
+
+            if (result !== 0) return result;
+          }
+
+          return 0;
+        }
+
+        function getServerConfigStatus(server) {
+          return (
+            getTextValue(server.config_status) ||
+            getTextValue(server.access?.config_status) ||
+            (server.config_issued ? "issued" : "not_issued")
+          );
+        }
+
+        function supportsServerConfigManagement(server) {
+          return (
+            getTextValue(server.type).toLowerCase() !== "ikev2" &&
+            server.manageable !== false &&
+            server.supports_config_management !== false
+          );
+        }
+
+        function isIkev2Server(server) {
+          return getTextValue(server.type).toLowerCase() === "ikev2";
+        }
+
+        function getIkev2Credentials(server) {
+          const access = server.access || {};
+          const credentials = access.ikev2_credentials || {};
+          const login =
+            getTextValue(access.ikev2_login) || getTextValue(credentials.login);
+          const password =
+            getTextValue(access.ikev2_password) ||
+            getTextValue(credentials.password);
+          const issued =
+            server.credentials_issued === true ||
+            access.credentials_available === true ||
+            getServerConfigStatus(server) === "credentials_issued";
+
+          return { issued, login, password };
+        }
+
+        function isServerAccessRevoked(server) {
+          return (
+            server.access?.revoked === true ||
+            server.access?.status === "revoked" ||
+            getServerConfigStatus(server) === "revoked"
+          );
+        }
+
+        function isServerConfigAvailable(server) {
+          if (
+            !supportsServerConfigManagement(server) ||
+            !server.access ||
+            isServerAccessRevoked(server)
+          )
+            return false;
+
+          const explicitAvailability =
+            typeof server.access?.config_available === "boolean"
+              ? server.access.config_available
+              : null;
+
+          if (explicitAvailability !== null) {
+            return explicitAvailability === true;
+          }
+
+          return (
+            getServerConfigStatus(server) === "issued" &&
+            server.can_download_config === true
+          );
+        }
+
+        function canReissueServerConfig(server) {
+          return (
+            supportsServerConfigManagement(server) &&
+            (server.can_reissue_config === true ||
+              Boolean(getTextValue(server.config_reissue_url)))
+          );
+        }
+
+        function formatServerDate(value) {
+          if (!value) return "Дата не указана";
+          const date = new Date(value);
+
+          return Number.isNaN(date.getTime())
+            ? String(value)
+            : new Intl.DateTimeFormat("ru-RU", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(date);
+        }
+
+        function getAccessStatusLabel(server) {
+          if (isServerAccessRevoked(server)) return "Отозвана";
+
+          const labels = {
+            active: "Активен",
+            provisioning: "Создаётся",
+            sync_failed: "Ошибка синхронизации",
+          };
+
+          return (
+            labels[server.access?.status] ||
+            server.access?.status ||
+            "Не выдавался"
+          );
+        }
+
+        function getConfigState(server) {
+          const configStatus = getServerConfigStatus(server);
+
+          if (isIkev2Server(server)) {
+            const credentials = getIkev2Credentials(server);
+            return credentials.issued
+              ? {
+                  label: "Учётные данные для IKEv2 выданы",
+                  badgeLabel: "Доступ выдан",
+                  badgeClass:
+                    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
+                  panelClass:
+                    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200",
+                }
+              : {
+                  label: "Учётные данные для IKEv2 ещё не выданы",
+                  badgeLabel: "Доступ не выдан",
+                  badgeClass:
+                    "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+                  panelClass:
+                    "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+                };
+          }
+
+          if (!supportsServerConfigManagement(server)) {
+            return {
+              label: "Управление конфигурацией недоступно",
+              badgeLabel: "Без управления",
+              badgeClass:
+                "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+              panelClass:
+                "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+            };
+          }
+
+          if (configStatus === "incomplete") {
+            return {
+              label: "Конфигурацию нужно перевыпустить",
+              badgeLabel: "Требует перевыпуска",
+              badgeClass:
+                "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+              panelClass:
+                "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200",
+            };
+          }
+
+          if (configStatus === "revoked" || isServerAccessRevoked(server)) {
+            return {
+              label: "Конфигурация отозвана",
+              badgeLabel: "Отозвана",
+              badgeClass:
+                "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200",
+              panelClass:
+                "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-200",
+            };
+          }
+
+          if (
+            (configStatus === "available" || configStatus === "issued") &&
+            isServerConfigAvailable(server)
+          ) {
+            return {
+              label: "Конфигурация доступна",
+              badgeLabel: "Доступна",
+              badgeClass:
+                "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200",
+              panelClass:
+                "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200",
+            };
+          }
+
+          if (
+            configStatus === "available" ||
+            configStatus === "issued" ||
+            configStatus === "unavailable"
+          ) {
+            return {
+              label: "Конфигурация недоступна",
+              badgeLabel: "Недоступна",
+              badgeClass:
+                "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+              panelClass:
+                "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+            };
+          }
+
+          return {
+            label: "Конфигурация не создана",
+            badgeLabel: "Не выдана",
+            badgeClass:
+              "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+            panelClass:
+              "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200",
+          };
+        }
+
+        function getServerActions(server) {
+          if (!supportsServerConfigManagement(server)) return [];
+
+          const configStatus = isServerAccessRevoked(server)
+            ? "revoked"
+            : getServerConfigStatus(server);
+          const configAvailable = isServerConfigAvailable(server);
+          const canReissue = canReissueServerConfig(server);
+          const actions = [];
+
+          if (configStatus === "incomplete" && server.can_create_config) {
+            actions.push({
+              type: "create",
+              label: "Создать новую конфигурацию",
+              loadingLabel: "Создаём...",
+              url: server.config_create_url,
+              className:
+                "bg-violet-600 text-white hover:bg-violet-500 dark:bg-violet-500 dark:hover:bg-violet-400",
+            });
+          }
+
+          if (
+            (configStatus === "available" || configStatus === "issued") &&
+            configAvailable &&
+            server.can_download_config === true
+          ) {
+            actions.push({
+              type: "download",
+              label: "Скачать",
+              loadingLabel: "Скачиваем...",
+              url: server.config_download_url,
+              className:
+                "bg-emerald-600 text-white hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400",
+            });
+          }
+
+          if (
+            (configStatus === "available" || configStatus === "issued") &&
+            canReissue
+          ) {
+            actions.push({
+              type: "reissue",
+              label: "Перевыпустить конфиг",
+              loadingLabel: "Перевыпускаем...",
+              url: server.config_reissue_url,
+              className:
+                "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-900/50",
+            });
+          }
+
+          if (
+            configStatus !== "available" &&
+            configStatus !== "issued" &&
+            configStatus !== "incomplete" &&
+            server.can_create_config === true
+          ) {
+            actions.push({
+              type: "create",
+              label:
+                configStatus === "revoked"
+                  ? "Создать заново"
+                  : "Создать конфигурацию",
+              loadingLabel: "Создаём...",
+              url: server.config_create_url,
+              className:
+                "bg-violet-600 text-white hover:bg-violet-500 dark:bg-violet-500 dark:hover:bg-violet-400",
+            });
+          }
+
+          if (configStatus === "revoked" && canReissue) {
+            actions.push({
+              type: "reissue",
+              label: "Перевыпустить конфиг",
+              loadingLabel: "Перевыпускаем...",
+              url: server.config_reissue_url,
+              className:
+                "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-900/50",
+            });
+          }
+
+          return actions;
+        }
+
+        function createIkev2CredentialRow(label, value) {
+          const row = createElement(
+            "div",
+            "grid gap-2 sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:items-center",
+          );
+          const title = createElement(
+            "span",
+            "text-xs font-medium uppercase text-slate-500 dark:text-slate-400",
+            label,
+          );
+          const credential = createElement(
+            "code",
+            "min-w-0 break-all font-mono text-sm text-slate-900 dark:text-slate-100",
+            value || "Не указано",
+          );
+          const copy = createElement(
+            "button",
+            "w-fit rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+            "Копировать",
+          );
+
+          copy.type = "button";
+          copy.dataset.copyCredential = value;
+          copy.dataset.defaultLabel = "Копировать";
+          copy.disabled = !value;
+          copy.setAttribute("aria-label", `Скопировать ${label.toLowerCase()}`);
+          row.append(title, credential, copy);
+          return row;
+        }
+
+        function createIkev2CredentialsPanel(server) {
+          if (!isIkev2Server(server)) return null;
+          const credentials = getIkev2Credentials(server);
+          if (!credentials.issued) return null;
+
+          const panel = createElement(
+            "div",
+            "mt-4 space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-950/60",
+          );
+          panel.append(
+            createIkev2CredentialRow("Login", credentials.login),
+            createIkev2CredentialRow("Password", credentials.password),
+          );
+          return panel;
+        }
+
+        function createServerCard(server) {
+          const slug = String(server.slug || "");
+          const state = getConfigState(server);
+          const actions = getServerActions(server);
+          const article = createElement(
+            "article",
+            "rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/70",
+          );
+          const header = createElement(
+            "div",
+            "flex items-start justify-between gap-3",
+          );
+          const identity = createElement(
+            "div",
+            "flex min-w-0 items-start gap-3",
+          );
+          const locationMark = createElement(
+            "span",
+            "flex h-10 w-10 shrink-0 items-center justify-center text-3xl leading-none",
+            getServerFlag(server) || "📍",
+          );
+          const headingGroup = createElement("div", "min-w-0 space-y-1");
+          const heading = createElement(
+            "h4",
+            "break-words text-base font-semibold text-slate-900 dark:text-slate-50",
+            getServerCountryName(server) || slug || "VPN-сервер",
+          );
+          const availability = createElement(
+            "span",
+            server.enabled === false
+              ? "inline-flex shrink-0 rounded-full border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              : "inline-flex shrink-0 rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 dark:border-sky-900/70 dark:bg-sky-950/40 dark:text-sky-200",
+            server.enabled === false ? "Отключён" : "Доступен",
+          );
+          const details = createElement("dl", "mt-4 space-y-2 text-sm");
+          const statusPanel = createElement(
+            "div",
+            `mt-4 rounded-lg border px-3 py-2 text-sm font-medium ${state.panelClass}`,
+            state.label,
+          );
+          const footer = createElement(
+            "div",
+            "mt-4 flex min-h-10 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+          );
+          const statusBadge = createElement(
+            "span",
+            `inline-flex rounded-full border px-2 py-1 text-xs font-medium ${state.badgeClass}`,
+            state.badgeLabel,
+          );
+          const location = getServerLocation(server);
+          const actionError = createElement(
+            "p",
+            "mt-3 hidden text-sm text-rose-600 dark:text-rose-300",
+          );
+          const paymentNotice =
+            supportsServerConfigManagement(server) && server.payment_required
+              ? createElement(
+                  "p",
+                  "mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200",
+                  "Создание и перевыпуск доступны только при активной оплате",
+                )
+              : null;
+          const ikev2CredentialsPanel = createIkev2CredentialsPanel(server);
+          const tutorialUrl = getServerTutorialUrl(server.type);
+
+          actionError.dataset.serverError = "";
+          actionError.setAttribute("role", "alert");
+          locationMark.setAttribute("aria-hidden", "true");
+
+          headingGroup.append(heading);
+
+          if (location) {
+            headingGroup.append(
+              createElement(
+                "p",
+                "break-words text-sm text-slate-600 dark:text-slate-400",
+                location,
+              ),
+            );
+          }
+
+          headingGroup.append(statusBadge);
+          identity.append(locationMark, headingGroup);
+          header.append(identity, availability);
+          if (isIkev2Server(server)) {
+            appendDetailRow(
+              details,
+              "Endpoint",
+              String(server.endpoint || "-"),
+            );
+          }
+          appendDetailRow(details, "Тип", getServerTypeLabel(server.type));
+
+          if (server.access?.vpn_ip) {
+            appendDetailRow(details, "VPN IP", String(server.access.vpn_ip));
+          }
+
+          if (isServerAccessRevoked(server)) {
+            appendDetailRow(
+              details,
+              "Дата отзыва",
+              formatServerDate(server.access?.revoked_at),
+            );
+          }
+
+          footer.append(
+            createElement(
+              "span",
+              "text-xs text-slate-500 dark:text-slate-400",
+              `Доступ: ${getAccessStatusLabel(server)}`,
+            ),
+          );
+
+          const actionGroup = createElement(
+            "div",
+            "flex flex-wrap items-center gap-2",
+          );
+
+          if (tutorialUrl) {
+            const tutorialLink = createElement(
+              "a",
+              "inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+              "Инструкция",
+            );
+            tutorialLink.href = tutorialUrl;
+            actionGroup.append(tutorialLink);
+          }
+
+          if (actions.length > 0 && slug) {
+            actions.forEach((action) => {
+              const button = createElement(
+                "button",
+                `inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${action.className}`,
+                action.label,
+              );
+
+              button.type = "button";
+              button.dataset.vpnAction = action.type;
+              button.dataset.serverSlug = slug;
+              button.dataset.defaultLabel = action.label;
+              button.dataset.loadingLabel = action.loadingLabel;
+
+              if (action.url) {
+                button.dataset.actionUrl = action.url;
+              }
+
+              button.setAttribute("aria-label", `${action.label}: ${slug}`);
+              const blockedByPayment =
+                server.payment_required === true &&
+                (action.type === "create" || action.type === "reissue");
+              button.toggleAttribute(
+                "disabled",
+                server.enabled === false || blockedByPayment,
+              );
+
+              if (blockedByPayment) {
+                button.title =
+                  "Создание и перевыпуск доступны только при активной оплате";
+              }
+
+              actionGroup.append(button);
+            });
+          }
+
+          if (actionGroup.childElementCount > 0) {
+            footer.append(actionGroup);
+          } else {
+            footer.append(
+              createElement(
+                "span",
+                "text-sm text-slate-500 dark:text-slate-400",
+                "Действие недоступно",
+              ),
+            );
+          }
+
+          article.append(header, details, statusPanel);
+
+          if (ikev2CredentialsPanel) {
+            article.append(ikev2CredentialsPanel);
+          }
+
+          if (paymentNotice) {
+            article.append(paymentNotice);
+          }
+
+          article.append(footer, actionError);
+          return article;
+        }
+
         function renderServers(servers) {
           if (!serversListBox) return;
+
+          serversListBox.replaceChildren();
 
           if (!Array.isArray(servers) || servers.length === 0) {
             showServersEmpty();
@@ -282,70 +1064,20 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           hideServersEmpty();
           serversListBox.classList.remove("hidden");
 
-          serversListBox.innerHTML = servers
-            .map((server) => {
-              const activeBadge = server.is_active
-                ? `<span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-300">Активен</span>`
-                : `<span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">Недоступен</span>`;
+          const fragment = document.createDocumentFragment();
+          const sortedServers = [...servers].sort(compareServersByLocation);
 
-              return `
-        <article class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-lg">${server.emoji_flag ?? "🌐"}</span>
-                <h4 class="truncate text-base font-semibold text-slate-900 dark:text-slate-50">
-                  ${server.name ?? "Безымянный сервер"}
-                </h4>
-              </div>
+          sortedServers.forEach((server) => {
+            fragment.append(createServerCard(server));
+          });
 
-              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                ${server.city ?? "-"}, ${server.country ?? "-"}
-              </p>
-            </div>
-
-            ${activeBadge}
-          </div>
-
-          <dl class="mt-4 space-y-2 text-sm">
-            <div class="flex items-center justify-between gap-3">
-              <dt class="text-slate-500 dark:text-slate-400">Тип</dt>
-              <dd class="font-medium text-slate-800 dark:text-slate-200">${server.type ?? "-"}</dd>
-            </div>
-            <div class="flex items-center justify-between gap-3">
-              <dt class="text-slate-500 dark:text-slate-400">Адрес</dt>
-              <dd class="font-mono text-slate-800 dark:text-slate-200">${server.address ?? "-"}</dd>
-            </div>
-          </dl>
-
-          <div class="mt-4">
-            <button
-              type="button"
-              disabled
-              class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-500 opacity-60 dark:border-slate-700 dark:text-slate-400"
-            >
-              Запросить конфиг
-            </button>
-          </div>
-        </article>
-      `;
-            })
-            .join("");
+          serversListBox.append(fragment);
         }
 
         async function fetchServers() {
-          const response = await fetch(`${apiBaseUrl}/api/servers/list`, {
+          const response = await protectedFetch("/api/vpn/me/servers", {
             method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
           });
-
-          if (response.status === 401) {
-            window.location.href = "/login";
-            return null;
-          }
 
           const data = await response.json().catch(() => ({}));
 
@@ -356,6 +1088,346 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           }
 
           return Array.isArray(data.data) ? data.data : [];
+        }
+
+        async function loadServers() {
+          hideServersError();
+          setServersLoading(true);
+
+          try {
+            vpnServers = await fetchServers();
+            renderServers(vpnServers);
+            return true;
+          } catch (error) {
+            showServersError(
+              error instanceof Error
+                ? error.message
+                : "Не удалось получить список VPN-серверов.",
+            );
+            return false;
+          } finally {
+            setServersLoading(false);
+          }
+        }
+
+        async function getApiErrorMessage(response, fallbackMessage) {
+          const contentType = response.headers.get("Content-Type") || "";
+
+          if (contentType.includes("application/json")) {
+            const data = await response.json().catch(() => ({}));
+            return data.error || data.message || fallbackMessage;
+          }
+
+          return fallbackMessage;
+        }
+
+        function setServerActionError(button, message) {
+          const error = button
+            .closest("article")
+            ?.querySelector("[data-server-error]");
+
+          if (!error) return;
+
+          if (message) {
+            error.textContent = message;
+            error.classList.remove("hidden");
+          } else {
+            error.textContent = "";
+            error.classList.add("hidden");
+          }
+        }
+
+        function setServerActionLoading(button, isLoading) {
+          button.toggleAttribute("disabled", isLoading);
+          button.textContent = isLoading
+            ? button.dataset.loadingLabel || "Подождите..."
+            : button.dataset.defaultLabel || "Готово";
+        }
+
+        function markServerConfigIssued(slug, access) {
+          vpnServers = vpnServers.map((server) =>
+            server.slug === slug
+              ? {
+                  ...server,
+                  config_status: "available",
+                  config_available: true,
+                  config_issued: true,
+                  can_create_config: false,
+                  can_download_config: true,
+                  access: {
+                    ...server.access,
+                    ...access,
+                    status: access?.status || "active",
+                    revoked: false,
+                    revoked_at: null,
+                    config_status: "available",
+                    config_available: true,
+                    has_config_material: access?.has_config_material ?? true,
+                  },
+                }
+              : server,
+          );
+
+          renderServers(vpnServers);
+        }
+
+        function markServerConfigIncomplete(slug) {
+          vpnServers = vpnServers.map((server) =>
+            server.slug === slug
+              ? {
+                  ...server,
+                  config_status: "incomplete",
+                  config_available: false,
+                  config_issued: false,
+                  can_create_config: true,
+                  can_download_config: false,
+                  config_download_url: null,
+                  access: server.access
+                    ? {
+                        ...server.access,
+                        config_status: "incomplete",
+                        config_available: false,
+                      }
+                    : server.access,
+                }
+              : server,
+          );
+
+          renderServers(vpnServers);
+        }
+
+        function getBackendPath(endpoint, fallbackPath) {
+          if (!endpoint) return fallbackPath;
+
+          try {
+            const url = new URL(endpoint, window.location.origin);
+
+            return url.pathname.startsWith("/api/")
+              ? `${url.pathname}${url.search}`
+              : fallbackPath;
+          } catch (_) {
+            return fallbackPath;
+          }
+        }
+
+        async function getConfigMutationData(response, failureMessage) {
+          const data = await response.json().catch(() => ({}));
+
+          if (response.status === 402) {
+            throw new Error(
+              data.message ||
+                "Создание и перевыпуск доступны только при активной оплате",
+            );
+          }
+
+          if (!response.ok || data.synced === false) {
+            const details = data.error || data.message;
+
+            throw new Error(
+              details ? `${failureMessage}: ${details}` : `${failureMessage}.`,
+            );
+          }
+
+          if (typeof data.config !== "string" || !data.config.trim()) {
+            throw new Error("Сервер не вернул созданную конфигурацию.");
+          }
+
+          return data;
+        }
+
+        function downloadGeneratedConfig(data, slug) {
+          const filename = sanitizeFilename(
+            `${data.user || "vpn"}-${data.server || slug}.conf`,
+            `${slug}.conf`,
+          );
+          const blob = new Blob([data.config], {
+            type: "text/plain;charset=UTF-8",
+          });
+
+          downloadBlob(blob, filename);
+        }
+
+        async function createVpnConfig(slug, createUrl) {
+          const fallbackPath = `/api/vpn/me/servers/${encodeURIComponent(slug)}/config`;
+          const response = await protectedFetch(
+            getBackendPath(createUrl, fallbackPath),
+            { method: "POST" },
+          );
+          const data = await getConfigMutationData(
+            response,
+            "Не удалось создать конфигурацию",
+          );
+
+          downloadGeneratedConfig(data, slug);
+          markServerConfigIssued(slug, data.access);
+          await loadServers();
+        }
+
+        async function reissueVpnConfig(slug, reissueUrl) {
+          const fallbackPath = `/api/vpn/me/servers/${encodeURIComponent(slug)}/config/reissue`;
+          const response = await protectedFetch(
+            getBackendPath(reissueUrl, fallbackPath),
+            { method: "POST" },
+          );
+          const data = await getConfigMutationData(
+            response,
+            "Не удалось перевыпустить конфигурацию",
+          );
+
+          downloadGeneratedConfig(data, slug);
+          markServerConfigIssued(slug, data.access);
+          await loadServers();
+        }
+
+        function sanitizeFilename(filename, fallbackFilename) {
+          const sanitized = filename
+            .replace(/^['"]|['"]$/g, "")
+            .replace(/[\\/]/g, "-")
+            .replace(/[\u0000-\u001f\u007f]/g, "")
+            .trim();
+
+          return sanitized || fallbackFilename;
+        }
+
+        function getDownloadFilename(disposition, fallbackFilename) {
+          if (!disposition) return fallbackFilename;
+
+          const encodedMatch = disposition.match(
+            /filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i,
+          );
+
+          if (encodedMatch?.[1]) {
+            try {
+              return sanitizeFilename(
+                decodeURIComponent(encodedMatch[1].trim()),
+                fallbackFilename,
+              );
+            } catch (_) {}
+          }
+
+          const filenameMatch = disposition.match(
+            /filename\s*=\s*(?:"([^"]+)"|([^;]+))/i,
+          );
+          const filename = filenameMatch?.[1] || filenameMatch?.[2];
+
+          return filename
+            ? sanitizeFilename(filename.trim(), fallbackFilename)
+            : fallbackFilename;
+        }
+
+        function downloadBlob(blob, filename) {
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = objectUrl;
+          link.download = filename;
+          link.hidden = true;
+          document.body.append(link);
+          link.click();
+          link.remove();
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        }
+
+        async function downloadVpnConfig(slug, downloadUrl) {
+          const fallbackPath = `/api/vpn/me/servers/${encodeURIComponent(slug)}/config`;
+          const response = await protectedFetch(
+            getBackendPath(downloadUrl, fallbackPath),
+            { method: "GET" },
+          );
+
+          if (response.status === 404) {
+            markServerConfigIncomplete(slug);
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              await getApiErrorMessage(
+                response,
+                "Не удалось скачать VPN-конфигурацию.",
+              ),
+            );
+          }
+
+          const blob = await response.blob();
+          const filename = getDownloadFilename(
+            response.headers.get("Content-Disposition"),
+            `${slug}.conf`,
+          );
+
+          downloadBlob(blob, filename);
+        }
+
+        async function handleServerAction(button) {
+          const action = button.dataset.vpnAction;
+          const slug = button.dataset.serverSlug;
+
+          if (!action || !slug) return;
+
+          const server = vpnServers.find((item) => item.slug === slug);
+          if (!server || !supportsServerConfigManagement(server)) {
+            setServerActionError(
+              button,
+              "Управление конфигурацией для этого сервера недоступно.",
+            );
+            return;
+          }
+
+          if (
+            action === "reissue" &&
+            !window.confirm("Старый конфиг перестанет работать. Продолжить?")
+          ) {
+            return;
+          }
+
+          setServerActionError(button, "");
+          setServerActionLoading(button, true);
+
+          try {
+            if (action === "create") {
+              await createVpnConfig(slug, button.dataset.actionUrl);
+            } else if (action === "download") {
+              await downloadVpnConfig(slug, button.dataset.actionUrl);
+            } else if (action === "reissue") {
+              await reissueVpnConfig(slug, button.dataset.actionUrl);
+            }
+          } catch (error) {
+            setServerActionError(
+              button,
+              error instanceof Error
+                ? error.message
+                : "Не удалось выполнить действие с конфигурацией.",
+            );
+          } finally {
+            setServerActionLoading(button, false);
+          }
+        }
+
+        async function copyIkev2Credential(button) {
+          const value = button.dataset.copyCredential;
+          if (!value) return;
+
+          try {
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(value);
+            } else {
+              const input = document.createElement("textarea");
+              input.value = value;
+              input.style.position = "fixed";
+              input.style.opacity = "0";
+              document.body.append(input);
+              input.select();
+              document.execCommand("copy");
+              input.remove();
+            }
+
+            button.textContent = "Скопировано";
+            window.setTimeout(() => {
+              button.textContent = button.dataset.defaultLabel || "Копировать";
+            }, 1500);
+          } catch (_) {
+            setServerActionError(button, "Не удалось скопировать значение.");
+          }
         }
 
         function showError(message) {
@@ -383,8 +1455,225 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           contentBox?.classList.remove("hidden");
         }
 
+        function formatPaymentDate(value) {
+          if (!value) return "";
+          const dateMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+          const date = dateMatch
+            ? new Date(
+                Number(dateMatch[1]),
+                Number(dateMatch[2]) - 1,
+                Number(dateMatch[3]),
+              )
+            : new Date(value);
+
+          return Number.isNaN(date.getTime())
+            ? String(value)
+            : new Intl.DateTimeFormat("ru-RU", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              }).format(date);
+        }
+
+        function formatDaysLeft(value) {
+          if (!Number.isFinite(Number(value))) return "";
+          const days = Math.max(0, Math.trunc(Number(value)));
+          const mod10 = days % 10;
+          const mod100 = days % 100;
+          const unit =
+            mod10 === 1 && mod100 !== 11
+              ? "день"
+              : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+                ? "дня"
+                : "дней";
+
+          return `Осталось ${days} ${unit}`;
+        }
+
+        function getVpnPaymentView(vpnUser) {
+          const payment = vpnUser.payment || {};
+          const paidUntil = vpnUser.paid_until ?? payment.paid_until ?? null;
+          const isPaid = vpnUser.is_paid ?? payment.is_paid ?? false;
+          const status =
+            vpnUser.payment_status ||
+            payment.status ||
+            (isPaid ? "paid" : "unpaid");
+          const formattedDate = formatPaymentDate(paidUntil);
+          let title = "Сервер не оплачен";
+          let badgeLabel = "Не оплачено";
+          let details = "";
+          let tone = "unpaid";
+
+          if (isPaid) {
+            title = formattedDate
+              ? `Оплачено до ${formattedDate}`
+              : "Оплата активна";
+            badgeLabel = "Оплачено";
+            details = formatDaysLeft(payment.days_left);
+            tone = "paid";
+          } else if (status === "expired") {
+            title = formattedDate
+              ? `Доступ закончился ${formattedDate}`
+              : "Доступ закончился";
+            badgeLabel = "Срок истёк";
+            tone = "expired";
+          }
+
+          return { title, badgeLabel, details, tone };
+        }
+
+        function createPaymentBadge(label, tone) {
+          const styles = {
+            paid: {
+              badge:
+                "inline-flex w-fit rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
+            },
+            expired: {
+              badge:
+                "inline-flex w-fit rounded-full border border-rose-200 bg-white px-2.5 py-1 text-xs font-medium text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200",
+            },
+            unpaid: {
+              badge:
+                "inline-flex w-fit rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
+            },
+          };
+
+          return createElement("span", styles[tone].badge, label);
+        }
+
+        function getPaymentDaysLeft(vpnUser) {
+          const payment = vpnUser.payment || {};
+          const apiDaysLeft = Number(payment.days_left);
+
+          if (Number.isFinite(apiDaysLeft)) {
+            return Math.max(0, Math.trunc(apiDaysLeft));
+          }
+
+          const paidUntil = vpnUser.paid_until ?? payment.paid_until;
+          if (!paidUntil) return null;
+          const endDate = new Date(paidUntil);
+          if (Number.isNaN(endDate.getTime())) return null;
+
+          return Math.max(
+            0,
+            Math.ceil((endDate.getTime() - Date.now()) / 86_400_000),
+          );
+        }
+
+        function createSubscriptionProgress(vpnUser, paymentView) {
+          const daysLeft = getPaymentDaysLeft(vpnUser);
+          const active = paymentView.tone === "paid" && daysLeft !== null;
+          const percentage = active
+            ? Math.min(100, (daysLeft / 30) * 100)
+            : 0;
+          const container = createElement("div", "mt-4 space-y-2");
+          const labelRow = createElement(
+            "div",
+            "flex flex-wrap items-center justify-between gap-2 text-xs",
+          );
+          const title = createElement(
+            "span",
+            "font-medium text-slate-600 dark:text-slate-300",
+            "До окончания подписки",
+          );
+          const value = createElement(
+            "span",
+            "text-slate-500 dark:text-slate-400",
+            active
+              ? formatDaysLeft(daysLeft)
+              : paymentView.tone === "expired"
+                ? "Срок истёк"
+                : "Подписка не активна",
+          );
+          const track = createElement(
+            "div",
+            "h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800",
+          );
+          const fill = createElement(
+            "div",
+            daysLeft !== null && daysLeft <= 3
+              ? "h-full rounded-full bg-rose-500 transition-[width]"
+              : daysLeft !== null && daysLeft <= 7
+                ? "h-full rounded-full bg-amber-500 transition-[width]"
+                : "h-full rounded-full bg-emerald-500 transition-[width]",
+          );
+
+          fill.style.width = `${percentage}%`;
+          track.setAttribute("role", "progressbar");
+          track.setAttribute("aria-label", "Остаток срока подписки");
+          track.setAttribute("aria-valuemin", "0");
+          track.setAttribute("aria-valuemax", "30");
+          track.setAttribute(
+            "aria-valuenow",
+            String(Math.min(30, daysLeft ?? 0)),
+          );
+          track.setAttribute("aria-valuetext", value.textContent || "");
+          labelRow.append(title, value);
+          track.append(fill);
+          container.append(labelRow, track);
+          return container;
+        }
+
+        function renderVpnProfile(user) {
+          if (!vpnProfileDetails || !vpnProfileEmpty) return;
+          const vpnUser = user.vpn_user;
+          vpnProfileDetails.replaceChildren();
+          vpnProfileEmpty.classList.toggle("hidden", Boolean(vpnUser));
+
+          if (!vpnUser) return;
+
+          const paymentView = getVpnPaymentView(vpnUser);
+          const profile = createElement("article", "py-4 first:pt-0 last:pb-0");
+          const header = createElement(
+            "div",
+            "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between",
+          );
+          const identity = createElement("div", "min-w-0");
+          const login = createElement(
+            "h4",
+            "break-words font-semibold text-slate-900 dark:text-slate-50",
+            vpnUser.login || "VPN-профиль без login",
+          );
+          const paymentText = createElement(
+            "p",
+            "mt-1 text-sm text-slate-600 dark:text-slate-400",
+            paymentView.title,
+          );
+          const badges = createElement(
+            "div",
+            "flex flex-wrap items-center gap-2",
+          );
+          badges.append(
+            createPaymentBadge(paymentView.badgeLabel, paymentView.tone),
+          );
+
+          const profileState = vpnUser.access_state || vpnUser.status;
+          if (profileState) {
+            badges.append(
+              createElement(
+                "span",
+                "inline-flex rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                profileState,
+              ),
+            );
+          }
+
+          identity.append(login, paymentText);
+          header.append(identity, badges);
+          profile.append(header, createSubscriptionProgress(vpnUser, paymentView));
+          vpnProfileDetails.append(profile);
+        }
+
         function fillUser(user) {
           if (!user) return;
+
+          const vpnUser = user.vpn_user;
+          renderVpnProfile(user);
+
+          if (adminLink) {
+            adminLink.classList.toggle("hidden", user.role !== "admin");
+            adminLink.classList.toggle("inline-flex", user.role === "admin");
+          }
 
           if (userName) {
             userName.textContent = user.name || user.login || "Безымянный";
@@ -397,9 +1686,12 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
               parts.push(`login: ${user.login}`);
             }
 
-            if (user.email) {
-              parts.push(user.email);
-            }
+            parts.push(
+              user.role === "admin" ? "Администратор" : "Пользователь",
+            );
+            parts.push(
+              !vpnUser ? "VPN-учётка не привязана" : `VPN: ${vpnUser.login}`,
+            );
 
             userMeta.textContent = parts.length
               ? parts.join(" • ")
@@ -440,77 +1732,24 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
             : "Сменить пароль";
         }
 
-        async function ensureCsrfCookie() {
-          const response = await fetch(`${apiBaseUrl}/sanctum/csrf-cookie`, {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error("Не удалось получить CSRF-cookie");
-          }
-        }
-
-        function getXsrfTokenFromCookie() {
-          const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-          return match ? decodeURIComponent(match[1].replace(/\+/g, "%20")) : "";
-        }
-
-        function getCsrfHeaders() {
-          const xsrfToken = getXsrfTokenFromCookie();
-
-          if (!xsrfToken) {
-            throw new Error(
-              "Не удалось прочитать XSRF-TOKEN. Проверьте настройки cookie на API.",
-            );
-          }
-
-          return {
-            "X-XSRF-TOKEN": xsrfToken,
-            "X-Requested-With": "XMLHttpRequest",
-          };
-        }
-
         async function postJson(path, body) {
-          const createRequest = () =>
-            fetch(`${apiBaseUrl}${path}`, {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                ...getCsrfHeaders(),
-              },
-              body: JSON.stringify(body),
-            });
-
-          await ensureCsrfCookie();
-          let response = await createRequest();
-
-          if (response.status === 419) {
-            await ensureCsrfCookie();
-            response = await createRequest();
-          }
-
-          return response;
+          return protectedFetch(path, {
+            method: "POST",
+            ...(body === undefined
+              ? {}
+              : {
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(body),
+                }),
+          });
         }
 
         async function fetchCurrentUser() {
-          const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
+          const response = await protectedFetch("/api/auth/me", {
             method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
           });
-
-          if (response.status === 401) {
-            window.location.href = "/login";
-            return null;
-          }
 
           const data = await response.json().catch(() => ({}));
 
@@ -520,7 +1759,140 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
             );
           }
 
+          saveAuthUser(data.user);
           return data.user;
+        }
+
+        function resetTelegramLinkState() {
+          telegramLinkResult?.classList.add("hidden");
+          telegramLinkError?.classList.add("hidden");
+          telegramTokenWrap?.classList.add("hidden");
+          if (telegramLinkError) telegramLinkError.textContent = "";
+          if (telegramLinkMessage) telegramLinkMessage.textContent = "";
+          if (telegramLinkExpires) telegramLinkExpires.textContent = "";
+          if (telegramStartToken instanceof HTMLInputElement) {
+            telegramStartToken.value = "";
+          }
+        }
+
+        function formatTelegramExpiry(value) {
+          if (!value) return "";
+          const date = new Date(value);
+
+          return Number.isNaN(date.getTime())
+            ? String(value)
+            : new Intl.DateTimeFormat("ru-RU", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(date);
+        }
+
+        function setTelegramLinkLoading(isLoading) {
+          if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
+          telegramLinkBtn.disabled = isLoading;
+          telegramLinkBtn.textContent = isLoading
+            ? "Создаём ссылку..."
+            : telegramLinkBtn.dataset.success === "true"
+              ? "Перейти в Telegram"
+              : "Привязать Telegram";
+        }
+
+        async function createTelegramLink() {
+          if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
+
+          resetTelegramLinkState();
+          telegramLinkBtn.dataset.success = "false";
+          setTelegramLinkLoading(true);
+          const telegramWindow = window.open("about:blank", "_blank");
+          if (telegramWindow) telegramWindow.opener = null;
+
+          try {
+            const response = await postJson("/api/telegram/link");
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || !payload.data) {
+              throw new Error("Не удалось создать ссылку для привязки Telegram");
+            }
+
+            const data = payload.data;
+            const botUrl =
+              typeof data.bot_url === "string" ? data.bot_url.trim() : "";
+            const startToken =
+              typeof data.start_token === "string"
+                ? data.start_token.trim()
+                : "";
+            const expiresAt = formatTelegramExpiry(data.expires_at);
+
+            if (telegramLinkMessage) {
+              telegramLinkMessage.textContent = botUrl
+                ? "Ссылка для привязки Telegram создана."
+                : `Откройте Telegram-бота и отправьте команду /start ${startToken}`;
+            }
+            if (telegramLinkExpires) {
+              telegramLinkExpires.textContent = expiresAt
+                ? `Ссылка действует до ${expiresAt}`
+                : "";
+            }
+
+            if (botUrl) {
+              if (telegramWindow && !telegramWindow.closed) {
+                telegramWindow.location.href = botUrl;
+              } else {
+                window.location.href = botUrl;
+              }
+            } else {
+              telegramWindow?.close();
+              if (!startToken) {
+                throw new Error(
+                  "Не удалось создать ссылку для привязки Telegram",
+                );
+              }
+              if (telegramStartToken instanceof HTMLInputElement) {
+                telegramStartToken.value = startToken;
+              }
+              telegramTokenWrap?.classList.remove("hidden");
+            }
+
+            telegramLinkResult?.classList.remove("hidden");
+            telegramLinkBtn.dataset.success = "true";
+          } catch (_) {
+            telegramWindow?.close();
+            resetTelegramLinkState();
+            if (telegramLinkError) {
+              telegramLinkError.textContent =
+                "Не удалось создать ссылку для привязки Telegram";
+              telegramLinkError.classList.remove("hidden");
+            }
+          } finally {
+            setTelegramLinkLoading(false);
+          }
+        }
+
+        async function copyTelegramToken() {
+          if (!(telegramStartToken instanceof HTMLInputElement)) return;
+          const token = telegramStartToken.value;
+          if (!token) return;
+
+          try {
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(token);
+            } else {
+              telegramStartToken.select();
+              document.execCommand("copy");
+            }
+
+            if (telegramTokenCopy instanceof HTMLButtonElement) {
+              telegramTokenCopy.textContent = "Скопировано";
+              window.setTimeout(() => {
+                telegramTokenCopy.textContent = "Копировать";
+              }, 1500);
+            }
+          } catch (_) {
+            if (telegramLinkError) {
+              telegramLinkError.textContent = "Не удалось скопировать код.";
+              telegramLinkError.classList.remove("hidden");
+            }
+          }
         }
 
         async function logout() {
@@ -529,13 +1901,14 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           logoutBtn.setAttribute("disabled", "disabled");
 
           try {
-            const response = await postJson("/api/auth/logout", {});
+            const response = await postJson("/api/auth/logout");
 
             if (!response.ok) {
               throw new Error("Не удалось выйти из системы");
             }
 
-            window.location.href = "/login";
+            clearAuthSession();
+            window.location.href = "/login/";
           } catch (error) {
             showError(error?.message || "Произошла ошибка при выходе");
             logoutBtn.removeAttribute("disabled");
@@ -586,13 +1959,32 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
           }
         });
 
+        telegramLinkBtn?.addEventListener("click", createTelegramLink);
+        telegramTokenCopy?.addEventListener("click", copyTelegramToken);
         logoutBtn?.addEventListener("click", logout);
+        serversRetryBtn?.addEventListener("click", loadServers);
+        serversListBox?.addEventListener("click", (event) => {
+          const target = event.target;
+
+          if (!(target instanceof Element)) return;
+
+          const button = target.closest("button[data-vpn-action]");
+
+          const copyButton = target.closest("button[data-copy-credential]");
+          if (copyButton instanceof HTMLButtonElement) {
+            copyIkev2Credential(copyButton);
+            return;
+          }
+
+          if (button instanceof HTMLButtonElement) {
+            handleServerAction(button);
+          }
+        });
 
         (async () => {
           hideError();
           hideServersError();
           setLoading(true);
-          setServersLoading(true);
 
           try {
             const user = await fetchCurrentUser();
@@ -601,17 +1993,11 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 
             fillUser(user);
             showContent();
-
-            const servers = await fetchServers();
-
-            if (servers) {
-              renderServers(servers);
-            }
+            await loadServers();
           } catch (error) {
             showError(error?.message || "Произошла ошибка");
           } finally {
             setLoading(false);
-            setServersLoading(false);
           }
         })();
       </script>

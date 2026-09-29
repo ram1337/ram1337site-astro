@@ -1,7 +1,5 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 ---
 
 <BaseLayout title="Вход - ram1337">
@@ -60,7 +58,13 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
             required
             placeholder="Введите логин"
             class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+            aria-describedby="login-field-error"
           />
+          <p
+            id="login-field-error"
+            class="hidden text-sm text-rose-600 dark:text-rose-300"
+          >
+          </p>
         </div>
 
         <div class="space-y-2">
@@ -89,7 +93,13 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
             required
             placeholder="Введите пароль"
             class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-violet-500 dark:focus:ring-violet-900/40"
+            aria-describedby="password-field-error"
           />
+          <p
+            id="password-field-error"
+            class="hidden text-sm text-rose-600 dark:text-rose-300"
+          >
+          </p>
           <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
             Если Вы забыли пароль, <a href="/about/"
               >обратитесь к администратору</a
@@ -99,6 +109,7 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
 
         <div
           id="login-error"
+          role="alert"
           class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200"
         >
         </div>
@@ -114,7 +125,16 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
     </div>
   </section>
 
-  <script is:inline define:vars={{ apiBaseUrl }}>
+  <script>
+    import {
+      ApiError,
+      authorizedFetch,
+      clearAuthSession,
+      getAuthToken,
+      loginUser,
+      saveAuthUser,
+    } from "../scripts/auth";
+
     const MIN_LOADER_TIME = 450;
 
     const loginContent = document.getElementById("login-content");
@@ -123,6 +143,10 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
     const form = document.getElementById("login-form");
     const loginInput = document.getElementById("login");
     const passwordInput = document.getElementById("password");
+    const loginFieldError = document.getElementById("login-field-error");
+    const passwordFieldError = document.getElementById(
+      "password-field-error",
+    );
     const togglePasswordBtn = document.getElementById("toggle-password");
     const errorBox = document.getElementById("login-error");
     const submitBtn = document.getElementById("login-submit");
@@ -149,90 +173,54 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
       errorBox.classList.add("hidden");
     }
 
+    function setFieldError(field, message) {
+      const input = field === "login" ? loginInput : passwordInput;
+      const fieldError =
+        field === "login" ? loginFieldError : passwordFieldError;
+
+      if (!input || !fieldError) return;
+
+      if (message) {
+        input.setAttribute("aria-invalid", "true");
+        fieldError.textContent = message;
+        fieldError.classList.remove("hidden");
+      } else {
+        input.removeAttribute("aria-invalid");
+        fieldError.textContent = "";
+        fieldError.classList.add("hidden");
+      }
+    }
+
+    function clearFieldErrors() {
+      setFieldError("login", "");
+      setFieldError("password", "");
+    }
+
     function setLoading(isLoading) {
       if (!submitBtn || !submitText) return;
       submitBtn.toggleAttribute("disabled", isLoading);
       submitText.textContent = isLoading ? "Входим..." : "Войти";
     }
 
-    async function ensureCsrfCookie() {
-      const response = await fetch(`${apiBaseUrl}/sanctum/csrf-cookie`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Не удалось получить CSRF-cookie.");
-      }
-    }
-
-    function getXsrfTokenFromCookie() {
-      const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-      return match ? decodeURIComponent(match[1].replace(/\+/g, "%20")) : "";
-    }
-
-    function getCsrfHeaders() {
-      const xsrfToken = getXsrfTokenFromCookie();
-
-      if (!xsrfToken) {
-        throw new Error(
-          "Не удалось прочитать XSRF-TOKEN. Проверьте настройки cookie на API.",
-        );
-      }
-
-      return {
-        "X-XSRF-TOKEN": xsrfToken,
-        "X-Requested-With": "XMLHttpRequest",
-      };
-    }
-
-    async function postJson(path, body) {
-      const createRequest = () =>
-        fetch(`${apiBaseUrl}${path}`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            ...getCsrfHeaders(),
-          },
-          body: JSON.stringify(body),
-        });
-
-      await ensureCsrfCookie();
-      let response = await createRequest();
-
-      if (response.status === 419) {
-        await ensureCsrfCookie();
-        response = await createRequest();
-      }
-
-      return response;
-    }
-
     async function initLoginPage() {
       const startedAt = performance.now();
-      let isAuthenticated = false;
+      let authenticatedUser = null;
 
-      try {
-        const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        });
+      if (getAuthToken()) {
+        try {
+          const response = await authorizedFetch("/api/auth/me");
 
-        if (response.ok) {
-          const data = await response.json().catch(() => ({}));
-          if (data?.user) {
-            isAuthenticated = true;
+          if (response.ok) {
+            const data = await response.json().catch(() => ({}));
+            if (data?.user) {
+              saveAuthUser(data.user);
+              authenticatedUser = data.user;
+            }
+          } else if (response.status === 401) {
+            clearAuthSession();
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
 
       const elapsed = performance.now() - startedAt;
       const remaining = Math.max(0, MIN_LOADER_TIME - elapsed);
@@ -241,7 +229,7 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
         await sleep(remaining);
       }
 
-      if (isAuthenticated) {
+      if (authenticatedUser) {
         window.location.replace("/cp/");
         return;
       }
@@ -260,32 +248,47 @@ const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL;
     form?.addEventListener("submit", async (event) => {
       event.preventDefault();
       clearError();
+      clearFieldErrors();
 
       const login = loginInput?.value?.trim() || "";
       const password = passwordInput?.value || "";
 
+      if (!login) {
+        setFieldError("login", "Введите логин.");
+      }
+
+      if (!password) {
+        setFieldError("password", "Введите пароль.");
+      }
+
       if (!login || !password) {
-        setError("Заполните логин и пароль.");
         return;
       }
 
       setLoading(true);
 
       try {
-        const response = await postJson("/api/auth/login", {
-          login,
-          password,
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(data.message || "Не удалось выполнить вход.");
-        }
+        await loginUser(login, password);
 
         window.location.href = "/cp/";
       } catch (error) {
-        setError(error?.message || "Произошла ошибка.");
+        if (error instanceof ApiError && error.status === 401) {
+          setError("Неверный логин или пароль");
+        } else if (error instanceof ApiError && error.status === 422) {
+          const loginMessage = error.errors.login?.[0] || "";
+          const passwordMessage = error.errors.password?.[0] || "";
+
+          setFieldError("login", loginMessage);
+          setFieldError("password", passwordMessage);
+
+          if (!loginMessage && !passwordMessage) {
+            setError(error.message);
+          }
+        } else {
+          setError(
+            error instanceof Error ? error.message : "Произошла ошибка.",
+          );
+        }
       } finally {
         setLoading(false);
       }
