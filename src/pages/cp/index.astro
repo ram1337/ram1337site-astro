@@ -68,7 +68,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             <button
               id="telegram-link-btn"
               type="button"
-              class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-500 dark:hover:bg-sky-400"
+              class="hidden items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-sky-500 dark:hover:bg-sky-400"
             >
               Привязать Telegram
             </button>
@@ -1669,6 +1669,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
           const vpnUser = user.vpn_user;
           renderVpnProfile(user);
+          renderTelegramAction(user);
 
           if (adminLink) {
             adminLink.classList.toggle("hidden", user.role !== "admin");
@@ -1763,6 +1764,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           return data.user;
         }
 
+        function renderTelegramAction(user) {
+          if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
+
+          const telegram = user?.telegram;
+          const canUnlink = telegram?.can_unlink === true;
+          const canLink =
+            telegram?.can_link === true && telegram?.is_linked !== true;
+          const action = canUnlink ? "unlink" : canLink ? "link" : "";
+
+          telegramLinkBtn.dataset.action = action;
+          telegramLinkBtn.dataset.success = "false";
+          telegramLinkBtn.classList.toggle("hidden", !action);
+          telegramLinkBtn.classList.toggle("inline-flex", Boolean(action));
+          telegramLinkBtn.textContent = canUnlink
+            ? "Отвязать Telegram"
+            : "Привязать Telegram";
+        }
+
         function resetTelegramLinkState() {
           telegramLinkResult?.classList.add("hidden");
           telegramLinkError?.classList.add("hidden");
@@ -1787,14 +1806,25 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
               }).format(date);
         }
 
-        function setTelegramLinkLoading(isLoading) {
+        function setTelegramActionLoading(isLoading) {
           if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
           telegramLinkBtn.disabled = isLoading;
+          const isUnlink = telegramLinkBtn.dataset.action === "unlink";
           telegramLinkBtn.textContent = isLoading
-            ? "Создаём ссылку..."
+            ? isUnlink
+              ? "Отвязываем..."
+              : "Создаём ссылку..."
+            : isUnlink
+              ? "Отвязать Telegram"
             : telegramLinkBtn.dataset.success === "true"
               ? "Перейти в Telegram"
               : "Привязать Telegram";
+        }
+
+        async function refreshCurrentUser() {
+          const user = await fetchCurrentUser();
+          fillUser(user);
+          return user;
         }
 
         async function createTelegramLink() {
@@ -1802,7 +1832,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
           resetTelegramLinkState();
           telegramLinkBtn.dataset.success = "false";
-          setTelegramLinkLoading(true);
+          setTelegramActionLoading(true);
           const telegramWindow = window.open("about:blank", "_blank");
           if (telegramWindow) telegramWindow.opener = null;
 
@@ -1810,8 +1840,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             const response = await postJson("/api/telegram/link");
             const payload = await response.json().catch(() => ({}));
 
+            if (
+              response.status === 409 &&
+              payload.message === "Telegram уже привязан."
+            ) {
+              telegramWindow?.close();
+              await refreshCurrentUser();
+              if (telegramLinkMessage) {
+                telegramLinkMessage.textContent = payload.message;
+              }
+              telegramLinkResult?.classList.remove("hidden");
+              return;
+            }
+
             if (!response.ok || !payload.data) {
-              throw new Error("Не удалось создать ссылку для привязки Telegram");
+              throw new Error(
+                payload.message ||
+                  "Не удалось создать ссылку для привязки Telegram",
+              );
             }
 
             const data = payload.data;
@@ -1864,7 +1910,57 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
               telegramLinkError.classList.remove("hidden");
             }
           } finally {
-            setTelegramLinkLoading(false);
+            setTelegramActionLoading(false);
+          }
+        }
+
+        async function unlinkTelegram() {
+          if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
+
+          resetTelegramLinkState();
+          setTelegramActionLoading(true);
+
+          try {
+            const response = await protectedFetch("/api/telegram/link", {
+              method: "DELETE",
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+              throw new Error(
+                payload.message || "Не удалось отвязать Telegram.",
+              );
+            }
+
+            const user = payload.user || (await fetchCurrentUser());
+            saveAuthUser(user);
+            fillUser(user);
+
+            if (telegramLinkMessage) {
+              telegramLinkMessage.textContent = "Telegram успешно отвязан.";
+            }
+            telegramLinkResult?.classList.remove("hidden");
+          } catch (error) {
+            if (telegramLinkError) {
+              telegramLinkError.textContent =
+                error?.message || "Не удалось отвязать Telegram.";
+              telegramLinkError.classList.remove("hidden");
+            }
+          } finally {
+            setTelegramActionLoading(false);
+          }
+        }
+
+        function handleTelegramAction() {
+          if (!(telegramLinkBtn instanceof HTMLButtonElement)) return;
+
+          if (telegramLinkBtn.dataset.action === "unlink") {
+            void unlinkTelegram();
+            return;
+          }
+
+          if (telegramLinkBtn.dataset.action === "link") {
+            void createTelegramLink();
           }
         }
 
@@ -1959,7 +2055,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           }
         });
 
-        telegramLinkBtn?.addEventListener("click", createTelegramLink);
+        telegramLinkBtn?.addEventListener("click", handleTelegramAction);
         telegramTokenCopy?.addEventListener("click", copyTelegramToken);
         logoutBtn?.addEventListener("click", logout);
         serversRetryBtn?.addEventListener("click", loadServers);

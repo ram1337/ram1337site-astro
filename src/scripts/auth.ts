@@ -37,12 +37,21 @@ export interface VpnUser {
   accesses: VpnAccessSummary[];
 }
 
+export interface TelegramLinkState {
+  is_linked: boolean;
+  linked_at: string | null;
+  can_link: boolean;
+  can_unlink: boolean;
+}
+
 export interface AuthUser {
   id: number;
   name: string;
   login: string;
   role: UserRole;
   vpn_user: VpnUser | null;
+  telegram_linked: boolean;
+  telegram: TelegramLinkState;
   created_at: string;
   updated_at: string;
 }
