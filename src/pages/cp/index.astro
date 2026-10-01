@@ -302,7 +302,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           </p>
         </div>
 
-        <div id="servers-list" class="hidden grid grid-cols-1 gap-4"></div>
+        <div id="servers-list" class="hidden space-y-8"></div>
       </section>
 
       <script>
@@ -371,6 +371,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         const serversListBox = document.getElementById("servers-list");
 
         let vpnServers = [];
+        let vpnLogin = "";
         const serverLocationCollator = new Intl.Collator("ru", {
           numeric: true,
           sensitivity: "base",
@@ -487,19 +488,32 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           return getTextValue(server.city);
         }
 
+        function getServerTypeKey(type) {
+          const normalizedType = getTextValue(type)
+            .toLowerCase()
+            .replace(/[\s_-]+/g, "");
+
+          const aliases = {
+            awg: "amneziawg",
+          };
+
+          return aliases[normalizedType] || normalizedType || "unknown";
+        }
+
         function getServerTypeLabel(type) {
-          const normalizedType = getTextValue(type).toLowerCase();
+          const normalizedType = getServerTypeKey(type);
           const labels = {
             ikev2: "IKEv2",
-            amneziawg: "AmneziaWG",
-            wireguard: "Wireguard",
+            amneziawg: "Amnezia WG",
+            wireguard: "WireGuard",
+            unknown: "Другие протоколы",
           };
 
           return labels[normalizedType] || getTextValue(type) || "Не указан";
         }
 
         function getServerTutorialUrl(type) {
-          const normalizedType = getTextValue(type).toLowerCase();
+          const normalizedType = getServerTypeKey(type);
           const tutorials = {
             ikev2: "/posts/ikev2-connect-tutorial/",
             amneziawg: "/posts/amneziawg-connect-tutorial/",
@@ -543,14 +557,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
         function supportsServerConfigManagement(server) {
           return (
-            getTextValue(server.type).toLowerCase() !== "ikev2" &&
+            getServerTypeKey(server.type) !== "ikev2" &&
             server.manageable !== false &&
             server.supports_config_management !== false
           );
         }
 
         function isIkev2Server(server) {
-          return getTextValue(server.type).toLowerCase() === "ikev2";
+          return getServerTypeKey(server.type) === "ikev2";
         }
 
         function getIkev2Credentials(server) {
@@ -1065,10 +1079,50 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           serversListBox.classList.remove("hidden");
 
           const fragment = document.createDocumentFragment();
-          const sortedServers = [...servers].sort(compareServersByLocation);
+          const groups = new Map();
 
-          sortedServers.forEach((server) => {
-            fragment.append(createServerCard(server));
+          servers.forEach((server) => {
+            const type = getServerTypeKey(server.type);
+            const group = groups.get(type) || [];
+            group.push(server);
+            groups.set(type, group);
+          });
+
+          const typeOrder = ["ikev2", "wireguard", "amneziawg"];
+          const sortedGroups = [...groups.entries()].sort(([left], [right]) => {
+            const leftIndex = typeOrder.indexOf(left);
+            const rightIndex = typeOrder.indexOf(right);
+
+            if (leftIndex !== -1 || rightIndex !== -1) {
+              if (leftIndex === -1) return 1;
+              if (rightIndex === -1) return -1;
+              return leftIndex - rightIndex;
+            }
+
+            return serverLocationCollator.compare(
+              getServerTypeLabel(left),
+              getServerTypeLabel(right),
+            );
+          });
+
+          sortedGroups.forEach(([type, groupServers]) => {
+            const section = document.createElement("section");
+            section.className = "space-y-3";
+
+            const heading = document.createElement("h4");
+            heading.className =
+              "text-base font-semibold text-slate-900 dark:text-slate-50";
+            heading.textContent = getServerTypeLabel(type);
+
+            const grid = document.createElement("div");
+            grid.className = "grid grid-cols-1 gap-4";
+
+            groupServers.sort(compareServersByLocation).forEach((server) => {
+              grid.append(createServerCard(server));
+            });
+
+            section.append(heading, grid);
+            fragment.append(section);
           });
 
           serversListBox.append(fragment);
@@ -1228,23 +1282,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             );
           }
 
-          if (typeof data.config !== "string" || !data.config.trim()) {
-            throw new Error("Сервер не вернул созданную конфигурацию.");
-          }
-
           return data;
-        }
-
-        function downloadGeneratedConfig(data, slug) {
-          const filename = sanitizeFilename(
-            `${data.user || "vpn"}-${data.server || slug}.conf`,
-            `${slug}.conf`,
-          );
-          const blob = new Blob([data.config], {
-            type: "text/plain;charset=UTF-8",
-          });
-
-          downloadBlob(blob, filename);
         }
 
         async function createVpnConfig(slug, createUrl) {
@@ -1258,8 +1296,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             "Не удалось создать конфигурацию",
           );
 
-          downloadGeneratedConfig(data, slug);
           markServerConfigIssued(slug, data.access);
+          await downloadVpnConfig(slug);
           await loadServers();
         }
 
@@ -1274,13 +1312,32 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             "Не удалось перевыпустить конфигурацию",
           );
 
-          downloadGeneratedConfig(data, slug);
           markServerConfigIssued(slug, data.access);
+          await downloadVpnConfig(slug);
           await loadServers();
         }
 
+        function transliterateFilename(filename) {
+          const letters = {
+            А: "A", а: "a", Б: "B", б: "b", В: "V", в: "v",
+            Г: "G", г: "g", Д: "D", д: "d", Е: "E", е: "e",
+            Ё: "E", ё: "e", Ж: "Zh", ж: "zh", З: "Z", з: "z",
+            И: "I", и: "i", Й: "Y", й: "y", К: "K", к: "k",
+            Л: "L", л: "l", М: "M", м: "m", Н: "N", н: "n",
+            О: "O", о: "o", П: "P", п: "p", Р: "R", р: "r",
+            С: "S", с: "s", Т: "T", т: "t", У: "U", у: "u",
+            Ф: "F", ф: "f", Х: "Kh", х: "kh", Ц: "Ts", ц: "ts",
+            Ч: "Ch", ч: "ch", Ш: "Sh", ш: "sh", Щ: "Shch", щ: "shch",
+            Ъ: "", ъ: "", Ы: "Y", ы: "y", Ь: "", ь: "",
+            Э: "E", э: "e", Ю: "Yu", ю: "yu", Я: "Ya", я: "ya",
+          };
+
+          return filename
+            .replace(/[А-Яа-яЁё]/g, (letter) => letters[letter] ?? letter);
+        }
+
         function sanitizeFilename(filename, fallbackFilename) {
-          const sanitized = filename
+          const sanitized = transliterateFilename(filename)
             .replace(/^['"]|['"]$/g, "")
             .replace(/[\\/]/g, "-")
             .replace(/[\u0000-\u001f\u007f]/g, "")
@@ -1289,26 +1346,41 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           return sanitized || fallbackFilename;
         }
 
+        function getConfigFallbackFilename(slug) {
+          const server = vpnServers.find((item) => item.slug === slug);
+          const login = getTextValue(vpnLogin) || "vpn";
+          const country = server ? getServerCountryName(server) : "";
+
+          return sanitizeFilename(
+            `${login} ${country || "config"}.conf`,
+            "vpn-config.conf",
+          );
+        }
+
         function getDownloadFilename(disposition, fallbackFilename) {
           if (!disposition) return fallbackFilename;
 
           const encodedMatch = disposition.match(
-            /filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i,
+            /(?:^|;)\s*filename\*\s*=\s*(?:([^']*)'[^']*')?(?:"([^"]*)"|([^;]*))/i,
           );
 
-          if (encodedMatch?.[1]) {
+          const encodedFilename = encodedMatch?.[2] || encodedMatch?.[3];
+
+          if (encodedFilename) {
             try {
               return sanitizeFilename(
-                decodeURIComponent(encodedMatch[1].trim()),
+                decodeURIComponent(encodedFilename.trim()),
                 fallbackFilename,
               );
             } catch (_) {}
           }
 
           const filenameMatch = disposition.match(
-            /filename\s*=\s*(?:"([^"]+)"|([^;]+))/i,
+            /(?:^|;)\s*filename\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/i,
           );
-          const filename = filenameMatch?.[1] || filenameMatch?.[2];
+          const filename = filenameMatch?.[1]
+            ? filenameMatch[1].replace(/\\([\\"])/g, "$1")
+            : filenameMatch?.[2];
 
           return filename
             ? sanitizeFilename(filename.trim(), fallbackFilename)
@@ -1332,7 +1404,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           const fallbackPath = `/api/vpn/me/servers/${encodeURIComponent(slug)}/config`;
           const response = await protectedFetch(
             getBackendPath(downloadUrl, fallbackPath),
-            { method: "GET" },
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/octet-stream, text/plain",
+              },
+            },
           );
 
           if (response.status === 404) {
@@ -1352,7 +1429,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           const blob = await response.blob();
           const filename = getDownloadFilename(
             response.headers.get("Content-Disposition"),
-            `${slug}.conf`,
+            getConfigFallbackFilename(slug),
           );
 
           downloadBlob(blob, filename);
@@ -1668,6 +1745,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           if (!user) return;
 
           const vpnUser = user.vpn_user;
+          vpnLogin = getTextValue(vpnUser?.login);
           renderVpnProfile(user);
           renderTelegramAction(user);
 
