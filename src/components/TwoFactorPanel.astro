@@ -1,0 +1,37 @@
+<section class="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70" aria-labelledby="two-factor-title">
+  <h3 id="two-factor-title" class="text-lg font-semibold text-slate-900 dark:text-slate-50">Двухфакторная аутентификация</h3>
+  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">При входе потребуется пароль и код из TOTP-приложения, например Google Authenticator, 2FAS или Aegis.</p>
+  <p id="two-factor-status" class="mt-3 text-sm font-medium" role="status"></p>
+  <form id="two-factor-form" class="mt-4 space-y-4">
+    <div id="two-factor-password-wrap" class="space-y-2">
+      <label for="two-factor-password" class="block text-sm font-medium">Текущий пароль</label>
+      <input id="two-factor-password" type="password" autocomplete="current-password" required
+        class="block h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+    </div>
+    <div id="two-factor-setup" class="hidden space-y-3">
+      <p class="text-sm">Отсканируйте QR-код в приложении или добавьте ключ вручную. Завершите подключение в течение 10 минут.</p>
+      <img id="two-factor-qr" width="240" height="240" alt="QR-код для подключения TOTP" class="rounded-xl" />
+      <label for="two-factor-secret" class="block text-sm font-medium">Ключ для ручного ввода</label>
+      <input id="two-factor-secret" readonly class="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 font-mono text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+    </div>
+    <div id="two-factor-code-wrap" class="hidden space-y-2">
+      <label for="two-factor-confirm-code" class="block text-sm font-medium">Код подтверждения</label>
+      <input id="two-factor-confirm-code" type="text" autocomplete="one-time-code" maxlength="64"
+        class="block h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 font-mono text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" aria-describedby="two-factor-code-help" />
+      <p id="two-factor-code-help" class="text-xs text-slate-500 dark:text-slate-400"></p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <button id="two-factor-submit" type="submit" class="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60">Подключить</button>
+      <button id="two-factor-cancel" type="button" class="hidden rounded-xl border border-slate-300 px-4 py-2.5 text-sm dark:border-slate-700">Отмена</button>
+    </div>
+  </form>
+  <div id="two-factor-recovery" class="mt-4 hidden space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+    <p>Сохраните резервные коды в безопасном месте. Каждый код позволяет войти один раз, если приложение недоступно. Эти коды показываются только сейчас.</p>
+    <pre id="two-factor-recovery-codes" class="whitespace-pre-wrap font-mono"></pre>
+    <div class="flex flex-wrap gap-3">
+      <button id="two-factor-download" type="button" class="rounded-lg border px-3 py-2">Скачать коды</button>
+      <button id="two-factor-saved" type="button" class="rounded-lg border px-3 py-2">Я сохранил коды</button>
+    </div>
+  </div>
+  <p id="two-factor-message" class="mt-4 hidden text-sm" role="status" aria-live="polite"></p>
+</section>

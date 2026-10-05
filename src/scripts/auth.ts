@@ -50,6 +50,7 @@ export interface AuthUser {
   login: string;
   role: UserRole;
   vpn_user: VpnUser | null;
+  two_factor_enabled: boolean;
   telegram_linked: boolean;
   telegram: TelegramLinkState;
   created_at: string;
@@ -60,6 +61,10 @@ interface LoginResponse {
   user: AuthUser;
   token: string;
   token_type: "Bearer";
+}
+
+interface TwoFactorRequired {
+  two_factor_required: true;
 }
 
 interface ErrorResponse {
@@ -120,7 +125,8 @@ export function clearAuthSession(): void {
 export async function loginUser(
   login: string,
   password: string,
-): Promise<LoginResponse> {
+  code?: string,
+): Promise<LoginResponse | TwoFactorRequired> {
   const response = await fetch(apiUrl("/api/auth/login"), {
     method: "POST",
     credentials: "omit",
@@ -128,10 +134,10 @@ export async function loginUser(
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ login, password }),
+    body: JSON.stringify({ login, password, code }),
   });
 
-  const data = await readJson<LoginResponse & ErrorResponse>(response);
+  const data = await readJson<Partial<LoginResponse> & Partial<TwoFactorRequired> & ErrorResponse>(response);
 
   if (!response.ok) {
     throw new ApiError(
@@ -141,12 +147,16 @@ export async function loginUser(
     );
   }
 
+  if (data?.two_factor_required === true) {
+    return { two_factor_required: true };
+  }
+
   if (!data?.token || !data.user) {
     throw new ApiError(500, {}, "Сервер вернул неполные данные авторизации.");
   }
 
   saveAuthSession(data.token, data.user);
-  return data;
+  return data as LoginResponse;
 }
 
 export function authorizedFetch(

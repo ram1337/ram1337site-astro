@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
 ---
 
 <BaseLayout title="Панель управления - ram1337">
@@ -255,6 +256,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         </form>
       </section>
 
+      <TwoFactorPanel />
+
       <section aria-labelledby="vpn-servers-title" class="space-y-5">
         <div class="space-y-2">
           <p
@@ -306,6 +309,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       </section>
 
       <script>
+        import { createTwoFactorPanel } from "../../scripts/two-factor";
+        const renderTwoFactor = createTwoFactorPanel(protectedFetch, refreshCurrentUser);
         import {
           authorizedFetch,
           clearAuthSession,
@@ -1748,6 +1753,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           vpnLogin = getTextValue(vpnUser?.login);
           renderVpnProfile(user);
           renderTelegramAction(user);
+          renderTwoFactor(user);
 
           if (adminLink) {
             adminLink.classList.toggle("hidden", user.role !== "admin");

@@ -107,6 +107,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           </p>
         </div>
 
+        <div id="two-factor-field" class="hidden space-y-2">
+          <label for="two-factor-code" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Код двухфакторной аутентификации</label>
+          <input id="two-factor-code" type="text" autocomplete="one-time-code" maxlength="64"
+            class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 font-mono text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            aria-describedby="two-factor-help" />
+          <p id="two-factor-help" class="text-xs text-slate-500 dark:text-slate-400">Введите 6 цифр из приложения или резервный код. Если приложение недоступно и резервных кодов нет, обратитесь к администратору.</p>
+        </div>
+
         <div
           id="login-error"
           role="alert"
@@ -134,6 +142,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       loginUser,
       saveAuthUser,
     } from "../scripts/auth";
+
+    const codeInput = document.getElementById("two-factor-code") as HTMLInputElement;
+    const codeField = document.getElementById("two-factor-field");
+    let twoFactorRequired = false;
 
     const MIN_LOADER_TIME = 450;
 
@@ -268,7 +280,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       setLoading(true);
 
       try {
-        await loginUser(login, password);
+        if (twoFactorRequired && !codeInput.value.trim()) {
+          setError("Введите код из приложения или резервный код.");
+          codeInput.focus();
+          return;
+        }
+        const result = await loginUser(login, password, twoFactorRequired ? codeInput.value.trim() : undefined);
+        if ("two_factor_required" in result) {
+          twoFactorRequired = true;
+          codeField?.classList.remove("hidden");
+          codeInput.focus();
+          return;
+        }
 
         window.location.href = "/cp/";
       } catch (error) {
@@ -293,6 +316,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         setLoading(false);
       }
     });
+
+    for (const input of [loginInput, passwordInput]) {
+      input?.addEventListener("input", () => {
+        twoFactorRequired = false;
+        codeInput.value = "";
+        codeField?.classList.add("hidden");
+      });
+    }
 
     initLoginPage();
   </script>
