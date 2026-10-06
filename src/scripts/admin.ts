@@ -1,3 +1,4 @@
+import { configAccessActions } from "./vpn-config-actions";
 import { saveDownload } from "./download";
 import {
   authorizedFetch,
@@ -1016,8 +1017,26 @@ function createAccessCard(access: VpnAccess): HTMLElement {
       );
     }
 
+    const footer = createElement("div", "mt-4 flex flex-wrap justify-end gap-2");
+    const server = servers.find((item) => item.slug === access.server);
+    const configActions = configAccessActions(access, access.server_type || server?.type);
+    if (configActions.supported) {
+      const download = configButton("Скачать .conf", "download", access.server);
+      download.disabled ||= !configActions.canDownload;
+      if (!configActions.canDownload) download.title = configActions.downloadHelp;
+      footer.append(download);
+      const provision = configButton(
+        configActions.provisionAction === "create" ? "Создать" : "Пересоздать",
+        configActions.provisionAction, access.server,
+      );
+      provision.disabled ||= server?.enabled === false;
+      if (server?.enabled === false) provision.title = "Сервер выключен.";
+      footer.append(provision);
+      if (!configActions.canDownload) {
+        row.append(createElement("p", "mt-3 text-sm text-slate-500 dark:text-slate-400", configActions.downloadHelp));
+      }
+    }
     if (access.id && !isRevokedAccess(access)) {
-      const footer = createElement("div", "mt-4 flex justify-end");
       const revoke = createElement(
         "button",
         "rounded-lg border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-800 dark:text-rose-200 dark:hover:bg-rose-950/40",
@@ -1026,9 +1045,10 @@ function createAccessCard(access: VpnAccess): HTMLElement {
       revoke.type = "button";
       revoke.dataset.accessId = String(access.id);
       revoke.dataset.serverName = access.server;
+      revoke.disabled = configOperationBusy;
       footer.append(revoke);
-      row.append(footer);
     }
+    row.append(footer);
 
     return row;
 }
@@ -1223,7 +1243,10 @@ function renderConfigControls(user: AdminUser): HTMLElement {
     const row = createElement("div", "flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-950");
     row.append(createElement("p", "text-sm", `${server.slug} · ${server.type} · ${available ? "Готова" : "Нет готового файла"}${server.enabled ? "" : " · Сервер выключен"}`));
     const actions = createElement("div", "flex flex-wrap gap-2");
-    if (available) actions.append(configButton("Скачать .conf", "download", server.slug));
+    const download = configButton("Скачать .conf", "download", server.slug);
+    download.disabled ||= !available;
+    if (!available) download.title = "Нет готового файла. Создайте или пересоздайте конфигурацию.";
+    actions.append(download);
     if (server.enabled) {
       if (access && !isRevokedAccess(access)) actions.append(configButton("Пересоздать", "reissue", server.slug));
       else actions.append(configButton("Создать", "create", server.slug));
@@ -1242,7 +1265,7 @@ async function handleConfigAction(button: HTMLButtonElement): Promise<void> {
   const action = button.dataset.configAction || "";
   const slug = button.dataset.configServer;
   const supported = configServers();
-  const targets = slug ? supported.filter((server) => server.slug === slug)
+  const targets = slug ? [{ slug }]
     : supported.filter((server) => server.enabled && (action === "create-all"
       || getAccesses(owner).some((access) => access.server === server.slug && !isRevokedAccess(access))));
   if (action.startsWith("reissue") && !window.confirm("Пересоздать конфигурации? Старые файлы перестанут работать. Пользователю потребуется установить новые.")) return;
