@@ -309,6 +309,7 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
       </section>
 
       <script>
+        import { saveDownload } from "../../scripts/download";
         import { createTwoFactorPanel } from "../../scripts/two-factor";
         const renderTwoFactor = createTwoFactorPanel(protectedFetch, refreshCurrentUser);
         import {
@@ -1362,49 +1363,6 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
           );
         }
 
-        function getDownloadFilename(disposition, fallbackFilename) {
-          if (!disposition) return fallbackFilename;
-
-          const encodedMatch = disposition.match(
-            /(?:^|;)\s*filename\*\s*=\s*(?:([^']*)'[^']*')?(?:"([^"]*)"|([^;]*))/i,
-          );
-
-          const encodedFilename = encodedMatch?.[2] || encodedMatch?.[3];
-
-          if (encodedFilename) {
-            try {
-              return sanitizeFilename(
-                decodeURIComponent(encodedFilename.trim()),
-                fallbackFilename,
-              );
-            } catch (_) {}
-          }
-
-          const filenameMatch = disposition.match(
-            /(?:^|;)\s*filename\s*=\s*(?:"((?:\\.|[^"])*)"|([^;]*))/i,
-          );
-          const filename = filenameMatch?.[1]
-            ? filenameMatch[1].replace(/\\([\\"])/g, "$1")
-            : filenameMatch?.[2];
-
-          return filename
-            ? sanitizeFilename(filename.trim(), fallbackFilename)
-            : fallbackFilename;
-        }
-
-        function downloadBlob(blob, filename) {
-          const objectUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-
-          link.href = objectUrl;
-          link.download = filename;
-          link.hidden = true;
-          document.body.append(link);
-          link.click();
-          link.remove();
-          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        }
-
         async function downloadVpnConfig(slug, downloadUrl) {
           const fallbackPath = `/api/vpn/me/servers/${encodeURIComponent(slug)}/config`;
           const response = await protectedFetch(
@@ -1431,13 +1389,7 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
             );
           }
 
-          const blob = await response.blob();
-          const filename = getDownloadFilename(
-            response.headers.get("Content-Disposition"),
-            getConfigFallbackFilename(slug),
-          );
-
-          downloadBlob(blob, filename);
+          await saveDownload(response, getConfigFallbackFilename(slug));
         }
 
         async function handleServerAction(button) {

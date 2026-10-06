@@ -1,3 +1,4 @@
+import { saveDownload } from "./download";
 import {
   authorizedFetch,
   clearAuthSession,
@@ -1181,10 +1182,107 @@ function renderIkev2CredentialForms(user: AdminUser): void {
   });
 }
 
+let configOperationBusy = false;
+
+function configBasePath(user: AdminUser): string {
+  const kind = user.type === "vpn_anonymous" ? "vpn-users" : "users";
+  return `/api/admin/${kind}/${getUserStableId(user)}/vpn-configs`;
+}
+
+function configServers(): AdminVpnServer[] {
+  return servers.filter((server) => ["amneziawg", "wireguard"].includes(server.type.toLowerCase()));
+}
+
+function configButton(label: string, action: string, slug?: string): HTMLButtonElement {
+  const button = createElement("button", "rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800", label);
+  button.type = "button";
+  button.dataset.configAction = action;
+  if (slug) button.dataset.configServer = slug;
+  button.disabled = configOperationBusy;
+  return button;
+}
+
+function renderConfigControls(user: AdminUser): HTMLElement {
+  const section = createElement("section", "space-y-3 rounded-lg border border-slate-200 p-4 dark:border-slate-800");
+  section.append(createElement("h4", "font-semibold", "Файлы конфигурации VPN"));
+  const supported = configServers();
+  const accesses = getAccesses(user);
+  const bulk = createElement("div", "flex flex-wrap gap-2");
+  const createAll = configButton("Создать все", "create-all");
+  createAll.disabled ||= !supported.some((server) => server.enabled);
+  const reissueAll = configButton("Пересоздать все", "reissue-all");
+  reissueAll.disabled ||= !supported.some((server) => server.enabled && accesses.some((access) => access.server === server.slug && !isRevokedAccess(access)));
+  const downloadAll = configButton("Скачать все (.zip)", "download-all");
+  downloadAll.disabled ||= !supported.some((server) => accesses.some((access) => access.server === server.slug && access.config_available && access.status === "active" && !isRevokedAccess(access)));
+  bulk.append(createAll, reissueAll, downloadAll);
+  section.append(bulk);
+  if (!supported.length) section.append(createElement("p", "text-sm text-slate-500", "Нет серверов WireGuard или AmneziaWG."));
+  for (const server of supported) {
+    const access = accesses.find((item) => item.server === server.slug);
+    const available = access?.config_available === true && access.status === "active" && !isRevokedAccess(access);
+    const row = createElement("div", "flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-950");
+    row.append(createElement("p", "text-sm", `${server.slug} · ${server.type} · ${available ? "Готова" : "Нет готового файла"}${server.enabled ? "" : " · Сервер выключен"}`));
+    const actions = createElement("div", "flex flex-wrap gap-2");
+    if (available) actions.append(configButton("Скачать .conf", "download", server.slug));
+    if (server.enabled) {
+      if (access && !isRevokedAccess(access)) actions.append(configButton("Пересоздать", "reissue", server.slug));
+      else actions.append(configButton("Создать", "create", server.slug));
+    }
+    row.append(actions);
+    section.append(row);
+  }
+  return section;
+}
+
+async function handleConfigAction(button: HTMLButtonElement): Promise<void> {
+  if (!selectedUser || configOperationBusy) return;
+  // Capture the owner before asynchronous requests; changing selection must not change the target.
+  const owner = selectedUser;
+  const base = configBasePath(owner);
+  const action = button.dataset.configAction || "";
+  const slug = button.dataset.configServer;
+  const supported = configServers();
+  const targets = slug ? supported.filter((server) => server.slug === slug)
+    : supported.filter((server) => server.enabled && (action === "create-all"
+      || getAccesses(owner).some((access) => access.server === server.slug && !isRevokedAccess(access))));
+  if (action.startsWith("reissue") && !window.confirm("Пересоздать конфигурации? Старые файлы перестанут работать. Пользователю потребуется установить новые.")) return;
+  configOperationBusy = true;
+  userAccesses?.querySelectorAll<HTMLButtonElement>("button").forEach((item) => { item.disabled = true; });
+  try {
+    if (action === "download" || action === "download-all") {
+      const response = await adminFetch(slug ? `${base}/${encodeURIComponent(slug)}` : base);
+      if (!response.ok) throw new Error(getPayloadMessage(await readPayload(response), "Не удалось скачать конфигурации."));
+      await saveDownload(response, slug ? `vpn-${slug}.conf` : "vpn-configs.zip", slug ? ".conf" : ".zip");
+      return;
+    }
+    let completed = 0;
+    const failures: string[] = [];
+    for (const server of targets) {
+      if (selectedUser !== owner) break;
+      try {
+        await requestJson(`${base}/${encodeURIComponent(server.slug)}${action.startsWith("reissue") ? "/reissue" : ""}`, jsonRequest("POST"));
+        completed++;
+      } catch (error) {
+        if (isAccessError(error)) throw error;
+        failures.push(`${server.slug}: ${getErrorMessage(error, "Ошибка")}`);
+      }
+    }
+    showNotice(`Готово: ${completed} из ${targets.length}.${failures.length ? " " + failures.join("; ") : ""}`, failures.length ? "error" : "success");
+  } catch (error) {
+    if (!isAccessError(error)) showNotice(getErrorMessage(error, "Не удалось выполнить действие."), "error");
+  } finally {
+    configOperationBusy = false;
+    if (selectedUser === owner) await refreshSelectedUser();
+    else if (selectedUser) renderUserVpnUser(selectedUser);
+    await loadUsers();
+  }
+}
+
 function renderUserVpnUser(user: AdminUser): void {
   if (!userAccesses) return;
   userAccesses.replaceChildren();
   renderIkev2CredentialForms(user);
+  userAccesses.append(renderConfigControls(user));
   const vpnUser = user.vpn_user;
 
   if (!vpnUser) {
@@ -1741,7 +1839,7 @@ async function loadServers(): Promise<void> {
     const payload = await requestJson<ApiPayload>("/api/admin/vpn/servers");
     servers = unwrapList<AdminVpnServer>(payload);
     renderServers();
-    if (selectedUser) renderIkev2CredentialForms(selectedUser);
+    if (selectedUser) renderUserVpnUser(selectedUser);
   } catch (error) {
     if (!isAccessError(error)) setMessage(serversError, getErrorMessage(error, "Не удалось загрузить серверы."));
   } finally {
@@ -2187,8 +2285,10 @@ userIkev2Accesses?.addEventListener("submit", saveIkev2Credentials);
 userAccesses?.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
+  const configAction = target.closest<HTMLButtonElement>("button[data-config-action]");
+  if (configAction) { void handleConfigAction(configAction); return; }
   const button = target.closest<HTMLButtonElement>("button[data-access-id]");
-  if (button) revokeLocalAccess(button);
+  if (button && !configOperationBusy) revokeLocalAccess(button);
 });
 
 serversReload?.addEventListener("click", loadServers);
