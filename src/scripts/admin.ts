@@ -541,7 +541,7 @@ function getVpnPaymentStatus(user: AdminUser): "paid" | "unpaid" | "expired" {
   if (!paidUntil) return "unpaid";
   const paidUntilKey = getDateKey(paidUntil);
   if (!paidUntilKey) return "unpaid";
-  return paidUntilKey > getTodayDateKey() ? "paid" : "expired";
+  return paidUntilKey >= getTodayDateKey() ? "paid" : "expired";
 }
 
 function createVpnPaymentCell(user: AdminUser): HTMLTableCellElement {
@@ -1861,6 +1861,7 @@ async function loadServers(): Promise<void> {
   try {
     const payload = await requestJson<ApiPayload>("/api/admin/vpn/servers");
     servers = unwrapList<AdminVpnServer>(payload);
+    renderCsvImportServers();
     renderServers();
     if (selectedUser) renderUserVpnUser(selectedUser);
   } catch (error) {
@@ -2026,7 +2027,7 @@ function createUnnamedPaymentCell(paidUntil: string | null | undefined) {
     return paymentCell;
   }
 
-  const expired = paidUntil.slice(0, 10) < new Date().toISOString().slice(0, 10);
+  const expired = paidUntil.slice(0, 10) < getTodayDateKey();
   const content = createElement("div", "space-y-1");
   content.append(badge(expired ? "Просрочено" : "Активно", expired ? "red" : "green"));
   content.append(
@@ -2274,6 +2275,138 @@ createUserCancel?.addEventListener("click", () => {
   setCreateUserFormVisible(false);
 });
 createUserForm?.addEventListener("submit", createUser);
+
+interface CsvImportResult {
+  dry_run: boolean;
+  created: number;
+  skipped: number;
+  accesses: number;
+  rows: { line: number; login: string; paid_until: string; status: "created" | "skipped" }[];
+}
+
+const csvImportForm = byId<HTMLFormElement>("csv-import-form");
+const csvImportFields = byId<HTMLFieldSetElement>("csv-import-fields");
+const csvImportFile = byId<HTMLInputElement>("csv-import-file");
+const csvImportServers = byId("csv-import-servers");
+const csvImportPreview = byId<HTMLButtonElement>("csv-import-preview");
+const csvImportApply = byId<HTMLButtonElement>("csv-import-apply");
+const csvImportError = byId("csv-import-error");
+const csvImportSummary = byId("csv-import-summary");
+const csvImportRows = byId("csv-import-rows");
+const csvImportResults = byId("csv-import-results");
+let csvImportSelection: { file: File; servers: string[] } | null = null;
+let csvImportBusy = false;
+
+function invalidateCsvImport(): void {
+  csvImportSelection = null;
+  if (csvImportApply) csvImportApply.disabled = true;
+  setMessage(csvImportError);
+  setMessage(csvImportSummary);
+  setVisible(csvImportResults, false);
+  csvImportRows?.replaceChildren();
+}
+
+function renderCsvImportServers(): void {
+  if (!csvImportServers) return;
+  const selected = new Set(Array.from(csvImportServers.querySelectorAll<HTMLInputElement>("input:checked")).map((input) => input.value));
+  invalidateCsvImport();
+  csvImportServers.replaceChildren();
+  const ikev2Servers = servers.filter((server) => server.type === "ikev2");
+  if (!ikev2Servers.length) {
+    csvImportServers.textContent = "IKEv2-серверов нет. Сначала добавьте сервер с типом ikev2.";
+    return;
+  }
+  for (const server of ikev2Servers) {
+    const label = document.createElement("label");
+    label.className = "flex items-center gap-2";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = server.slug;
+    checkbox.checked = selected.has(server.slug);
+    label.append(checkbox, document.createTextNode(`${server.slug}${server.enabled ? "" : " (выключен)"}`));
+    csvImportServers.append(label);
+  }
+}
+
+function renderCsvImportResult(result: CsvImportResult): void {
+  const prefix = result.dry_run ? "Проверка завершена. Будет создано" : "Импорт завершён. Создано";
+  setMessage(csvImportSummary, `${prefix} аккаунтов: ${result.created}; IKEv2-доступов: ${result.accesses}; пропущено существующих аккаунтов: ${result.skipped}.`);
+  csvImportRows?.replaceChildren();
+  const fragment = document.createDocumentFragment();
+  for (const row of result.rows) {
+    const tr = document.createElement("tr");
+    for (const value of [row.line, row.login, row.paid_until.split("-").reverse().join("."), row.status === "skipped" ? "Пропущен: аккаунт существует" : result.dry_run ? "Будет создан" : "Создан"]) {
+      const td = document.createElement("td");
+      td.className = "p-2";
+      td.textContent = String(value);
+      tr.append(td);
+    }
+    fragment.append(tr);
+  }
+  csvImportRows?.append(fragment);
+  setVisible(csvImportResults, true);
+}
+
+async function runCsvImport(dryRun: boolean): Promise<void> {
+  if (csvImportBusy) return;
+  let selection = csvImportSelection;
+  if (dryRun) {
+    invalidateCsvImport();
+    const file = csvImportFile?.files?.[0];
+    const selected = Array.from(csvImportServers?.querySelectorAll<HTMLInputElement>("input:checked") ?? []).map((input) => input.value);
+    if (!file || !selected.length) {
+      setMessage(csvImportError, "Выберите CSV-файл и хотя бы один IKEv2-сервер.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage(csvImportError, "Размер файла не должен превышать 2 МБ.");
+      return;
+    }
+    selection = { file, servers: selected };
+  }
+  if (!selection) return;
+
+  const body = new FormData();
+  body.append("file", selection.file);
+  selection.servers.forEach((slug) => body.append("servers[]", slug));
+  body.append("dry_run", dryRun ? "1" : "0");
+  csvImportBusy = true;
+  if (csvImportFields) csvImportFields.disabled = true;
+  setButtonLoading(dryRun ? csvImportPreview : csvImportApply, true, dryRun ? "Проверяем…" : "Импортируем…");
+  if (csvImportPreview) csvImportPreview.disabled = true;
+  if (csvImportApply) csvImportApply.disabled = true;
+  setMessage(csvImportError);
+  try {
+    const result = await requestJson<CsvImportResult>("/api/admin/users/import", { method: "POST", body });
+    renderCsvImportResult(result);
+    csvImportSelection = dryRun && result.created > 0 ? selection : null;
+    if (!dryRun) {
+      if (csvImportFile) csvImportFile.value = "";
+      await loadUsers();
+    }
+  } catch (error) {
+    csvImportSelection = null;
+    setMessage(csvImportSummary);
+    setVisible(csvImportResults, false);
+    if (!isAccessError(error)) {
+      const messages = error instanceof ApiRequestError ? Object.values(error.errors).flat() : [];
+      setMessage(csvImportError, messages.length ? messages.join("\n") : getErrorMessage(error, "Не удалось импортировать CSV."));
+    }
+  } finally {
+    csvImportBusy = false;
+    if (csvImportFields) csvImportFields.disabled = false;
+    setButtonLoading(dryRun ? csvImportPreview : csvImportApply, false);
+    if (csvImportPreview) csvImportPreview.disabled = false;
+    if (csvImportApply) csvImportApply.disabled = !csvImportSelection;
+  }
+}
+
+csvImportForm?.addEventListener("change", invalidateCsvImport);
+csvImportForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void runCsvImport(true);
+});
+csvImportApply?.addEventListener("click", () => void runCsvImport(false));
 usersLoginSearch?.addEventListener("input", () => {
   if (usersSearchTimer !== undefined) {
     window.clearTimeout(usersSearchTimer);

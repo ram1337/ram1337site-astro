@@ -187,6 +187,45 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           </button>
         </form>
 
+        <details class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+          <summary class="cursor-pointer font-semibold text-slate-900 dark:text-slate-50">Импорт пользователей из CSV</summary>
+          <form id="csv-import-form" class="mt-4 space-y-4">
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+              CSV без строки заголовка: 1-й столбец — логин, 2-й — пароль, 3-й — оплачено до (ДД.ММ.ГГГГ).
+              UTF-8, до 1000 пользователей и 2 МБ. Разделитель — запятая, точка с запятой или табуляция.
+              Пароль — от 8 до 191 символа; логин — от 3 до 64 символов (латиница, цифры, точка, дефис, подчёркивание).
+            </p>
+            <p class="text-sm text-slate-600 dark:text-slate-300">
+              Будут созданы аккаунты ЛК и IKEv2-доступы с теми же логином и паролем на выбранных серверах.
+              Существующие аккаунты пропускаются. Указанная дата оплачена включительно: доступ действует до конца этого дня.
+              Пользователи на самих IKEv2-серверах должны быть заведены заранее.
+            </p>
+            <fieldset id="csv-import-fields" class="space-y-4">
+              <label class="block space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                <span>CSV-файл</span>
+                <input id="csv-import-file" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" required
+                  class="block w-full rounded-lg border border-slate-300 p-2 dark:border-slate-700" />
+              </label>
+              <fieldset class="space-y-2">
+                <legend class="text-sm font-medium text-slate-700 dark:text-slate-200">IKEv2-серверы для выдачи доступов</legend>
+                <div id="csv-import-servers" class="space-y-2 text-sm text-slate-600 dark:text-slate-300">Загружаем серверы…</div>
+              </fieldset>
+            </fieldset>
+            <div class="flex flex-wrap gap-3">
+              <button id="csv-import-preview" type="submit" class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60">Проверить CSV</button>
+              <button id="csv-import-apply" type="button" disabled class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">Импортировать</button>
+            </div>
+            <div id="csv-import-error" role="alert" class="hidden whitespace-pre-wrap text-sm text-rose-600 dark:text-rose-300"></div>
+            <p id="csv-import-summary" role="status" class="hidden text-sm text-slate-700 dark:text-slate-200"></p>
+            <div id="csv-import-results" class="hidden max-h-80 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-sm text-slate-700 dark:text-slate-200">
+                <thead><tr><th class="p-2">Строка</th><th class="p-2">Логин</th><th class="p-2">Оплачено до</th><th class="p-2">Результат</th></tr></thead>
+                <tbody id="csv-import-rows"></tbody>
+              </table>
+            </div>
+          </form>
+        </details>
+
         <label class="block space-y-1 text-sm text-slate-600 dark:text-slate-300">
           <span>Поиск по логину</span>
           <input
