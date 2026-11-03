@@ -85,6 +85,12 @@ interface AdminUser {
     days_left?: number;
   } | null;
   vpn_user?: AdminVpnUser | null;
+  xray_subscription?: {
+    issued: boolean;
+    client_name: string;
+    enabled: boolean;
+    synced_at: string | null;
+  } | null;
 }
 
 interface AdminVpnServer {
@@ -126,6 +132,7 @@ interface UnnamedAccess {
 }
 
 interface ApiPayload {
+  subscription_sync?: { synced: boolean; message?: string } | null;
   data?: unknown;
   user?: unknown;
   vpn_user?: unknown;
@@ -1304,6 +1311,7 @@ async function handleConfigAction(button: HTMLButtonElement): Promise<void> {
 function renderUserVpnUser(user: AdminUser): void {
   if (!userAccesses) return;
   userAccesses.replaceChildren();
+  userAccesses.append(renderPersonalSubscription(user));
   renderIkev2CredentialForms(user);
   userAccesses.append(renderConfigControls(user));
   const vpnUser = user.vpn_user;
@@ -1383,6 +1391,38 @@ function renderUserVpnUser(user: AdminUser): void {
     }
     section.append(accessList);
     userAccesses.append(section);
+}
+
+function renderPersonalSubscription(user: AdminUser): HTMLElement {
+  const section = createElement("section", "rounded-xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50");
+  section.append(createElement("h4", "font-semibold text-slate-900 dark:text-slate-50", "Личная VPN-подписка"));
+  const subscription = user.xray_subscription;
+  if (!subscription?.issued) {
+    section.append(createElement("p", "mt-2 text-sm text-slate-500 dark:text-slate-400", "Подписка не выпущена."));
+    return section;
+  }
+  section.append(createElement("p", "mt-2 break-words text-sm text-slate-600 dark:text-slate-300", `Клиент: ${subscription.client_name}`));
+  section.append(createElement("p", "mt-2 text-sm text-slate-500 dark:text-slate-400", "Удаление отзовёт текущую ссылку подписки. Другие VPN-доступы сохранятся. При активной оплате пользователь сможет выпустить новую подписку."));
+  const button = createElement("button", "mt-3 rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/40", "Удалить подписку") as HTMLButtonElement;
+  button.type = "button";
+  button.addEventListener("click", async () => {
+    const id = getUserStableId(user);
+    if (!id || button.disabled) return;
+    if (!window.confirm(`Удалить VPN-подписку пользователя ${getUserLogin(user)}? Текущая ссылка перестанет работать.`)) return;
+    setButtonLoading(button, true, "Удаляем…");
+    try {
+      const kind = isAnonymousUser(user) ? "vpn-users" : "users";
+      await requestJson(`/api/admin/${kind}/${id}/vpn-subscription`, jsonRequest("DELETE"));
+      showNotice("Подписка удалена, прежняя ссылка отозвана.");
+      if (selectedUser === user) await refreshSelectedUser();
+    } catch (error) {
+      if (!isAccessError(error)) showNotice(getErrorMessage(error, "Не удалось удалить подписку."), "error");
+    } finally {
+      setButtonLoading(button, false);
+    }
+  });
+  section.append(button);
+  return section;
 }
 
 function fillUserDetail(user: AdminUser): void {
@@ -1660,7 +1700,7 @@ async function saveUser(event: SubmitEvent): Promise<void> {
 
   setButtonLoading(userSave, true);
   try {
-    await requestJson(
+    const saved = await requestJson<ApiPayload>(
       `/api/admin/users/${accountId}`,
       jsonRequest("PATCH", {
         name: userName.value.trim(),
@@ -1669,7 +1709,11 @@ async function saveUser(event: SubmitEvent): Promise<void> {
         paid_until: userPaidUntil.value || null,
       }),
     );
-    showNotice("Данные пользователя сохранены.");
+    if (saved.subscription_sync?.synced === false) {
+      showNotice(saved.subscription_sync.message || "Данные сохранены. Синхронизация срока VPN повторится автоматически.", "error");
+    } else {
+      showNotice("Данные пользователя сохранены.");
+    }
     await loadUsers();
     await refreshSelectedUser();
   } catch (error) {
