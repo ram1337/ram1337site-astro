@@ -1,0 +1,16 @@
+<section id="vpn-subscription" class="hidden rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70" aria-labelledby="subscription-title">
+  <h3 id="subscription-title" class="text-lg font-semibold text-slate-900 dark:text-slate-50">Подписка VPN</h3>
+  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Одна ссылка для подключения. Добавьте её в VPN-приложение как подписку.</p>
+  <p id="subscription-status" class="mt-3 text-sm text-slate-600 dark:text-slate-300" role="status" aria-live="polite"></p>
+  <button id="subscription-issue" type="button" class="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60">Выпустить подписку</button>
+  <div id="subscription-result" class="mt-4 hidden space-y-4">
+    <label for="subscription-url" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Ссылка подписки</label>
+    <div class="flex flex-col gap-2 sm:flex-row">
+      <input id="subscription-url" type="text" readonly spellcheck="false" autocomplete="off" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
+      <button id="subscription-copy" type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">Копировать</button>
+    </div>
+    <img id="subscription-qr" alt="QR-код подписки VPN" width="220" height="220" class="rounded-xl bg-white p-2" />
+    <p class="text-sm text-slate-500 dark:text-slate-400">Срок подписки совпадает с оплаченной датой. После продления ссылка остаётся прежней. Не передавайте ссылку и QR-код другим людям.</p>
+  </div>
+  <p id="subscription-error" class="mt-3 hidden text-sm text-rose-700 dark:text-rose-300" role="alert"></p>
+</section>

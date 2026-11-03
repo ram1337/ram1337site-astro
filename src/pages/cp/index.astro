@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
+import VpnSubscription from "../../components/VpnSubscription.astro";
 ---
 
 <BaseLayout title="Панель управления - ram1337">
@@ -146,6 +147,8 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
         >
         </div>
       </section>
+
+      <VpnSubscription />
 
       <section
         id="vpn-profile"
@@ -326,6 +329,8 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
       </section>
 
       <script>
+        import { createVpnSubscription } from "../../scripts/vpn-subscription";
+        const vpnSubscription = createVpnSubscription(protectedFetch);
         import { saveDownload } from "../../scripts/download";
         import { createTwoFactorPanel } from "../../scripts/two-factor";
         const renderTwoFactor = createTwoFactorPanel(
@@ -2203,6 +2208,7 @@ import TwoFactorPanel from "../../components/TwoFactorPanel.astro";
 
             fillUser(user);
             showContent();
+            await vpnSubscription.load();
             await loadServers();
           } catch (error) {
             showError(error?.message || "Произошла ошибка");
