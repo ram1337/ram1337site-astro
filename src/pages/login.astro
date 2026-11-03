@@ -3,6 +3,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Вход - ram1337">
+  <aside
+    aria-labelledby="recovery-notice-title"
+    class="mx-auto mb-6 w-full max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+  >
+    <h2 id="recovery-notice-title" class="text-base font-semibold">
+      Ведутся восстановительные работы
+    </h2>
+    <p class="mt-2 text-sm leading-relaxed">
+      Хостинг-провайдер подвергся атаке. По его вине данные сервиса и резервные
+      копии были утрачены. Ведутся работы по восстановлению данных и доступа к
+      сервису
+    </p>
+  </aside>
+
   <div
     id="login-loader"
     class="mx-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
@@ -108,11 +122,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         </div>
 
         <div id="two-factor-field" class="hidden space-y-2">
-          <label for="two-factor-code" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Код двухфакторной аутентификации</label>
-          <input id="two-factor-code" type="text" autocomplete="one-time-code" maxlength="64"
+          <label
+            for="two-factor-code"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-200"
+            >Код двухфакторной аутентификации</label
+          >
+          <input
+            id="two-factor-code"
+            type="text"
+            autocomplete="one-time-code"
+            maxlength="64"
             class="block h-14 w-full rounded-2xl border border-slate-300 bg-white px-4 font-mono text-base text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-            aria-describedby="two-factor-help" />
-          <p id="two-factor-help" class="text-xs text-slate-500 dark:text-slate-400">Введите 6 цифр из приложения или резервный код. Если приложение недоступно и резервных кодов нет, обратитесь к администратору.</p>
+            aria-describedby="two-factor-help"
+          />
+          <p
+            id="two-factor-help"
+            class="text-xs text-slate-500 dark:text-slate-400"
+          >
+            Введите 6 цифр из приложения или резервный код. Если приложение
+            недоступно и резервных кодов нет, обратитесь к администратору.
+          </p>
         </div>
 
         <div
@@ -143,7 +172,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       saveAuthUser,
     } from "../scripts/auth";
 
-    const codeInput = document.getElementById("two-factor-code") as HTMLInputElement;
+    const codeInput = document.getElementById(
+      "two-factor-code",
+    ) as HTMLInputElement;
     const codeField = document.getElementById("two-factor-field");
     let twoFactorRequired = false;
 
@@ -156,9 +187,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const loginInput = document.getElementById("login");
     const passwordInput = document.getElementById("password");
     const loginFieldError = document.getElementById("login-field-error");
-    const passwordFieldError = document.getElementById(
-      "password-field-error",
-    );
+    const passwordFieldError = document.getElementById("password-field-error");
     const togglePasswordBtn = document.getElementById("toggle-password");
     const errorBox = document.getElementById("login-error");
     const submitBtn = document.getElementById("login-submit");
@@ -285,7 +314,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           codeInput.focus();
           return;
         }
-        const result = await loginUser(login, password, twoFactorRequired ? codeInput.value.trim() : undefined);
+        const result = await loginUser(
+          login,
+          password,
+          twoFactorRequired ? codeInput.value.trim() : undefined,
+        );
         if ("two_factor_required" in result) {
           twoFactorRequired = true;
           codeField?.classList.remove("hidden");
