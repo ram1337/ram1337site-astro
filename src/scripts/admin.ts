@@ -1,4 +1,5 @@
 import { configAccessActions } from "./vpn-config-actions";
+import { createDeviceManager } from "./subscription-devices";
 import { saveDownload } from "./download";
 import {
   authorizedFetch,
@@ -1422,6 +1423,11 @@ function renderPersonalSubscription(user: AdminUser): HTMLElement {
     }
   });
   section.append(button);
+  const devices = createElement("div", "mt-5 space-y-4 border-t border-slate-200 pt-4 dark:border-slate-700");
+  section.append(devices);
+  const ownerKind = isAnonymousUser(user) ? "vpn-users" : "users";
+  const ownerId = getUserStableId(user);
+  if (ownerId) void createDeviceManager(devices, adminFetch, `/api/admin/${ownerKind}/${ownerId}/vpn-subscription/devices`).load();
   return section;
 }
 

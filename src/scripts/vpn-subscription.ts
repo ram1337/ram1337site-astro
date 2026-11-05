@@ -1,4 +1,6 @@
 import QRCode from "qrcode";
+import { subscriptionAppLinks } from "./subscription-app-links";
+import { createDeviceManager } from "./subscription-devices";
 
 type Subscription = {
   available: boolean;
@@ -6,6 +8,7 @@ type Subscription = {
   can_issue: boolean;
   paid_until: string | null;
   subscription_url: string | null;
+  device_limit?: number;
 };
 
 export function createVpnSubscription(fetcher: (path: string, options?: RequestInit) => Promise<Response>) {
@@ -17,6 +20,11 @@ export function createVpnSubscription(fetcher: (path: string, options?: RequestI
   const copy = document.getElementById("subscription-copy") as HTMLButtonElement | null;
   const input = document.getElementById("subscription-url") as HTMLInputElement | null;
   const qr = document.getElementById("subscription-qr") as HTMLImageElement | null;
+  const happ = document.getElementById("subscription-happ") as HTMLAnchorElement | null;
+  const incy = document.getElementById("subscription-incy") as HTMLAnchorElement | null;
+  const deviceLimit = document.getElementById("subscription-device-limit");
+  const deviceRoot = document.getElementById("subscription-devices");
+  const devices = deviceRoot ? createDeviceManager(deviceRoot, fetcher, "/api/vpn/me/subscription/devices") : null;
   let busy = false;
   let generation = 0;
 
@@ -42,13 +50,25 @@ export function createVpnSubscription(fetcher: (path: string, options?: RequestI
         : "Для выпуска и использования подписки нужна активная оплата.";
     }
     result?.classList.toggle("hidden", !data.subscription_url);
+    if (deviceLimit) deviceLimit.textContent = data.device_limit === 0 ? "Без ограничения устройств" : `До ${data.device_limit ?? 3} устройств`;
+    const links = data.subscription_url ? subscriptionAppLinks(data.subscription_url) : null;
+    for (const [anchor, url] of [[happ, links?.happ], [incy, links?.incy]] as const) {
+      if (!anchor) continue;
+      if (url) {
+        anchor.href = url; anchor.removeAttribute("aria-disabled"); anchor.removeAttribute("tabindex");
+      } else {
+        anchor.removeAttribute("href"); anchor.setAttribute("aria-disabled", "true"); anchor.tabIndex = -1;
+      }
+    }
+    deviceRoot?.classList.toggle("hidden", !data.issued || !data.available);
+    if (data.issued && data.available) void devices?.load();
     if (input) input.value = data.subscription_url || "";
     qr?.removeAttribute("src");
     qr?.classList.add("hidden");
     if (data.subscription_url && qr) {
       try {
         // Generate locally: never send subscription secrets to a QR service.
-        const image = await QRCode.toDataURL(data.subscription_url, { width: 220, margin: 2 });
+        const image = await QRCode.toDataURL(data.subscription_url, { width: 180, margin: 2 });
         if (version === generation) {
           qr.src = image;
           qr.classList.remove("hidden");

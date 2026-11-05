@@ -1,16 +1,48 @@
-<section id="vpn-subscription" class="hidden rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70" aria-labelledby="subscription-title">
-  <h3 id="subscription-title" class="text-lg font-semibold text-slate-900 dark:text-slate-50">Подписка VPN</h3>
-  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Одна ссылка для подключения. Добавьте её в VPN-приложение как подписку.</p>
-  <p id="subscription-status" class="mt-3 text-sm text-slate-600 dark:text-slate-300" role="status" aria-live="polite"></p>
-  <button id="subscription-issue" type="button" class="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60">Выпустить подписку</button>
-  <div id="subscription-result" class="mt-4 hidden space-y-4">
-    <label for="subscription-url" class="block text-sm font-medium text-slate-700 dark:text-slate-200">Ссылка подписки</label>
-    <div class="flex flex-col gap-2 sm:flex-row">
-      <input id="subscription-url" type="text" readonly spellcheck="false" autocomplete="off" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" />
-      <button id="subscription-copy" type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">Копировать</button>
+---
+import { Image } from "astro:assets";
+import happLogo from "../images/happ_logo.jpg";
+import incyLogo from "../images/incy_logo.png";
+---
+
+<section id="vpn-subscription" class="hidden overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm dark:border-violet-900/60 dark:bg-slate-900" aria-labelledby="subscription-title">
+  <div class="border-b border-violet-100 bg-gradient-to-br from-violet-50 via-slate-50 to-white p-5 sm:p-6 dark:border-violet-900/50 dark:from-violet-950/50 dark:via-slate-900 dark:to-slate-900">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-300">Личная подписка</p>
+      <span id="subscription-device-limit" class="rounded-full border border-violet-200 bg-white/70 px-3 py-1 text-xs font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200">До 3 устройств</span>
     </div>
-    <img id="subscription-qr" alt="QR-код подписки VPN" width="220" height="220" class="rounded-xl bg-white p-2" />
-    <p class="text-sm text-slate-500 dark:text-slate-400">Срок подписки совпадает с оплаченной датой. После продления ссылка остаётся прежней. Не передавайте ссылку и QR-код другим людям.</p>
+    <h3 id="subscription-title" class="mt-3 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Ваш VPN — в одной подписке</h3>
+    <p class="mt-2 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">Выпустите подписку и добавьте её в приложение. Одна ссылка для всех ваших подключений, без ручной настройки.</p>
+    <p id="subscription-status" class="mt-4 text-sm font-medium text-slate-700 dark:text-slate-200" role="status" aria-live="polite"></p>
+    <button id="subscription-issue" type="button" class="mt-4 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60">Выпустить подписку</button>
   </div>
-  <p id="subscription-error" class="mt-3 hidden text-sm text-rose-700 dark:text-rose-300" role="alert"></p>
+  <div id="subscription-result" class="hidden p-5 sm:p-6">
+    <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Добавить в приложение</p>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <a id="subscription-happ" aria-disabled="true" tabindex="-1" rel="noreferrer" class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition hover:border-violet-400 hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-violet-600 dark:hover:bg-violet-950/30">
+        <Image src={happLogo} width={44} height={44} alt="" class="h-11 w-11 rounded-xl object-cover" />
+        <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-slate-900 dark:text-slate-50">Happ</span><span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Добавить подписку</span></span>
+        <span aria-hidden="true" class="text-lg text-violet-600 dark:text-violet-300">↗</span>
+      </a>
+      <a id="subscription-incy" aria-disabled="true" tabindex="-1" rel="noreferrer" class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition hover:border-violet-400 hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-violet-600 dark:hover:bg-violet-950/30">
+        <Image src={incyLogo} width={44} height={44} alt="" class="h-11 w-11 rounded-xl object-cover" />
+        <span class="min-w-0 flex-1"><span class="block text-sm font-semibold text-slate-900 dark:text-slate-50">INCY</span><span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Добавить подписку</span></span>
+        <span aria-hidden="true" class="text-lg text-violet-600 dark:text-violet-300">↗</span>
+      </a>
+    </div>
+    <p class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">Кнопка откроет установленное приложение. Если оно не открылось, скопируйте ссылку ниже и добавьте её вручную.</p>
+    <details class="group mt-5 rounded-xl border border-slate-200 dark:border-slate-700">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200">Ссылка и QR-код</summary>
+      <div class="space-y-4 border-t border-slate-200 p-4 dark:border-slate-700">
+        <label for="subscription-url" class="block text-xs font-medium text-slate-500 dark:text-slate-400">Ссылка подписки</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input id="subscription-url" type="text" readonly spellcheck="false" autocomplete="off" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-900 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100" />
+          <button id="subscription-copy" type="button" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Копировать</button>
+        </div>
+        <img id="subscription-qr" alt="QR-код подписки VPN" width="180" height="180" class="rounded-xl bg-white p-2" />
+        <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Ссылка личная — не передавайте её другим людям. После продления оплаты она останется прежней.</p>
+      </div>
+    </details>
+  </div>
+  <div id="subscription-devices" class="hidden space-y-4 border-t border-slate-200 p-5 sm:p-6 dark:border-slate-800"></div>
+  <p id="subscription-error" class="mx-5 mb-5 hidden text-sm text-rose-700 sm:mx-6 dark:text-rose-300" role="alert"></p>
 </section>
