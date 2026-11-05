@@ -1,6 +1,7 @@
 import QRCode from "qrcode";
 import { subscriptionAppLinks } from "./subscription-app-links";
 import { createDeviceManager } from "./subscription-devices";
+import { deviceLimitLabel } from "./subscription-device-limit";
 
 type Subscription = {
   available: boolean;
@@ -24,7 +25,13 @@ export function createVpnSubscription(fetcher: (path: string, options?: RequestI
   const incy = document.getElementById("subscription-incy") as HTMLAnchorElement | null;
   const deviceLimit = document.getElementById("subscription-device-limit");
   const deviceRoot = document.getElementById("subscription-devices");
-  const devices = deviceRoot ? createDeviceManager(deviceRoot, fetcher, "/api/vpn/me/subscription/devices") : null;
+  function showDeviceLimit(limit: number | undefined) {
+    if (!deviceLimit) return;
+    const valid = typeof limit === "number" && Number.isInteger(limit) && limit >= 0;
+    deviceLimit.classList.toggle("hidden", !valid);
+    deviceLimit.textContent = valid ? deviceLimitLabel(limit) : "";
+  }
+  const devices = deviceRoot ? createDeviceManager(deviceRoot, fetcher, "/api/vpn/me/subscription/devices", showDeviceLimit) : null;
   let busy = false;
   let generation = 0;
 
@@ -50,7 +57,7 @@ export function createVpnSubscription(fetcher: (path: string, options?: RequestI
         : "Для выпуска и использования подписки нужна активная оплата.";
     }
     result?.classList.toggle("hidden", !data.subscription_url);
-    if (deviceLimit) deviceLimit.textContent = data.device_limit === 0 ? "Без ограничения устройств" : `До ${data.device_limit ?? 3} устройств`;
+    showDeviceLimit(data.device_limit);
     const links = data.subscription_url ? subscriptionAppLinks(data.subscription_url) : null;
     for (const [anchor, url] of [[happ, links?.happ], [incy, links?.incy]] as const) {
       if (!anchor) continue;

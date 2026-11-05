@@ -5,10 +5,11 @@ import mdx from "@astrojs/mdx";
 import tailwindcss from "@tailwindcss/vite";
 
 import sitemap from "@astrojs/sitemap";
+import assetVersions from './integrations/asset-versions.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [mdx(), sitemap()],
+  integrations: [mdx(), sitemap(), assetVersions()],
 
   site: "https://ram1337.dev",
   vite: {

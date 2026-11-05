@@ -86,6 +86,7 @@ interface AdminUser {
     days_left?: number;
   } | null;
   vpn_user?: AdminVpnUser | null;
+  device_limit?: number;
   xray_subscription?: {
     issued: boolean;
     client_name: string;
@@ -1397,6 +1398,42 @@ function renderUserVpnUser(user: AdminUser): void {
 function renderPersonalSubscription(user: AdminUser): HTMLElement {
   const section = createElement("section", "rounded-xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50");
   section.append(createElement("h4", "font-semibold text-slate-900 dark:text-slate-50", "Личная VPN-подписка"));
+  const limitForm = createElement("form", "mt-4 space-y-2");
+  const limitId = `subscription-limit-${isAnonymousUser(user) ? "vpn" : "account"}-${getUserStableId(user)}`;
+  const label = createElement("label", "block text-sm font-medium text-slate-700 dark:text-slate-200", "Разрешённое количество устройств");
+  label.htmlFor = limitId;
+  const controls = createElement("div", "flex flex-wrap items-center gap-2");
+  const limitInput = createElement("input", "w-24 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950") as HTMLInputElement;
+  limitInput.type = "number"; limitInput.id = limitId; limitInput.name = "device_limit";
+  limitInput.min = "1"; limitInput.max = "100"; limitInput.step = "1"; limitInput.required = true;
+  const currentLimit = user.device_limit;
+  if (typeof currentLimit === "number") limitInput.value = String(currentLimit);
+  const saveLimit = createElement("button", "rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50", "Сохранить лимит") as HTMLButtonElement;
+  saveLimit.type = "submit";
+  const limitStatus = createElement("p", "text-sm text-slate-600 dark:text-slate-300");
+  limitStatus.setAttribute("role", "status"); limitStatus.setAttribute("aria-live", "polite");
+  controls.append(limitInput, saveLimit);
+  limitForm.append(label, controls, createElement("p", "text-xs text-slate-500 dark:text-slate-400", "От 1 до 100. При уменьшении лимита панель оставит последние использованные устройства в пределах нового лимита."), limitStatus);
+  limitForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const id = getUserStableId(user);
+    if (!id || saveLimit.disabled || !limitForm.reportValidity()) return;
+    const limit = Number(limitInput.value);
+    if (typeof currentLimit === "number" && (currentLimit === 0 || limit < currentLimit)
+        && !window.confirm(`Уменьшить лимит до ${limit}? Лишние регистрации устройств будут удалены панелью; сохранятся последние использованные.`)) return;
+    saveLimit.disabled = true; limitInput.disabled = true; limitStatus.textContent = "Сохраняем…";
+    try {
+      const kind = isAnonymousUser(user) ? "vpn-users" : "users";
+      const payload = await requestJson(`/api/admin/${kind}/${id}/vpn-subscription/device-limit`, jsonRequest("PATCH", { device_limit: limit }));
+      const message = payload.message || "Лимит устройств сохранён.";
+      showNotice(message, payload.subscription_sync?.synced === false ? "error" : "success");
+      limitStatus.textContent = message;
+      if (selectedUser === user) await refreshSelectedUser();
+    } catch (error) {
+      if (!isAccessError(error)) limitStatus.textContent = getErrorMessage(error, "Не удалось сохранить лимит.");
+    } finally { saveLimit.disabled = false; limitInput.disabled = false; }
+  });
+  section.append(limitForm);
   const subscription = user.xray_subscription;
   if (!subscription?.issued) {
     section.append(createElement("p", "mt-2 text-sm text-slate-500 dark:text-slate-400", "Подписка не выпущена."));

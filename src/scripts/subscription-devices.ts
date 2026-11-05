@@ -6,7 +6,7 @@ export function deviceTitle(device: SubscriptionDevice): string {
   return device.model.trim() || [device.os, device.os_version].filter(Boolean).join(" ") || `Устройство №${device.id}`;
 }
 
-export function createDeviceManager(root: HTMLElement, fetcher: Fetcher, path: string) {
+export function createDeviceManager(root: HTMLElement, fetcher: Fetcher, path: string, onLimit?: (limit: number) => void) {
   function el<K extends keyof HTMLElementTagNameMap>(tag: K, classes: string, text = ""): HTMLElementTagNameMap[K] {
     const node = document.createElement(tag);
     node.className = classes;
@@ -34,6 +34,7 @@ export function createDeviceManager(root: HTMLElement, fetcher: Fetcher, path: s
   }
 
   function render(state: DeviceState) {
+    onLimit?.(state.limit);
     summary.textContent = state.limit > 0 ? `Занято ${state.registered} из ${state.limit} · свободно ${state.remaining ?? 0}` : `Подключено устройств: ${state.registered} · без ограничения`;
     list.replaceChildren();
     if (!state.devices.length) list.append(el("li", "rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400", "Устройства появятся после добавления или обновления подписки в приложении."));
